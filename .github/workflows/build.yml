@@ -114,6 +114,9 @@ jobs:
         with:
           gradle-version: wrapper
 
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
       - name: Run lint
         run: ./gradlew lint --stacktrace
 
