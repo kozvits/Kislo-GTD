@@ -1,13 +1,14 @@
 package com.kozvits.kislogtd.presentation.settings
 
 import android.app.Application
-import android.content.ContentResolver
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
 import com.kozvits.kislogtd.data.repository.TaskRepository
 import com.kozvits.kislogtd.domain.model.Task
 import com.kozvits.kislogtd.domain.model.TaskCategory
@@ -26,11 +27,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.UUID
 import javax.inject.Inject
 
 data class SettingsUiState(
@@ -43,10 +44,10 @@ data class SettingsUiState(
     val syncLog: String = "",
     val syncInProgress: Boolean = false,
     val appVersion: String = "1.0.0",
-    val retentionDays: Int = 90
+    val retentionDays: Int = 90,
+    val exportResult: String? = null
 )
 
-// JSON model for import/export — matches the kislogtd_import.json format
 data class ExportData(
     val version: Int = 1,
     val exportedAt: String = "",
@@ -87,7 +88,6 @@ class SettingsViewModel @Inject constructor(
     private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
 
     init {
-        // Load sync settings
         viewModelScope.launch {
             syncStateRepository.settings.collect { settings ->
                 _state.update {
@@ -108,14 +108,12 @@ class SettingsViewModel @Inject constructor(
                         } else ""
                     )
                 }
-                // Verify connection
                 if (settings.isEnabled && settings.accessToken.isNotBlank()) {
                     verifyConnection()
                 }
             }
         }
 
-        // Load app version
         try {
             val pkg = application.packageManager.getPackageInfo(
                 application.packageName, 0
@@ -123,9 +121,7 @@ class SettingsViewModel @Inject constructor(
             _state.update {
                 it.copy(appVersion = pkg.versionName ?: "1.0.0")
             }
-        } catch (_: Exception) {
-            // ignore
-        }
+        } catch (_: Exception) {}
     }
 
     private suspend fun verifyConnection() {
@@ -167,11 +163,7 @@ class SettingsViewModel @Inject constructor(
             val ctx = getApplication<Application>()
             SyncWorker.cancel(ctx)
             _state.update {
-                it.copy(
-                    isSyncEnabled = false,
-                    userEmail = "",
-                    lastSyncTime = ""
-                )
+                it.copy(isSyncEnabled = false, userEmail = "", lastSyncTime = "")
             }
             addLog("Dropbox отключён")
         }
@@ -182,11 +174,8 @@ class SettingsViewModel @Inject constructor(
             _state.update { it.copy(syncInProgress = true) }
             addLog("Выгрузка...")
             val result = syncManager.uploadToDropbox()
-            if (result.success) {
-                addLog("✓ ${result.message}")
-            } else {
-                addLog("✗ ${result.message}")
-            }
+            if (result.success) addLog("✓ ${result.message}")
+            else addLog("✗ ${result.message}")
             _state.update { it.copy(syncInProgress = false) }
         }
     }
@@ -196,11 +185,8 @@ class SettingsViewModel @Inject constructor(
             _state.update { it.copy(syncInProgress = true) }
             addLog("Загрузка...")
             val result = syncManager.downloadFromDropbox()
-            if (result.success) {
-                addLog("✓ ${result.message}")
-            } else {
-                addLog("✗ ${result.message}")
-            }
+            if (result.success) addLog("✓ ${result.message}")
+            else addLog("✗ ${result.message}")
             _state.update { it.copy(syncInProgress = false) }
         }
     }
@@ -244,16 +230,17 @@ class SettingsViewModel @Inject constructor(
         addLog("Удаление данных — не реализовано")
     }
 
+    fun dismissExportResult() {
+        _state.update { it.copy(exportResult = null) }
+    }
+
     // ═══════════════════════════════════════════════════════════════
-    //  JSON Export / Import
+    //  JSON Export — save directly to Downloads/
     // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * Generate export JSON string — called when user taps "Экспортировать".
-     * Returns the JSON string that should be written to the chosen URI.
-     */
-    fun generateExportJson(callback: (String) -> Unit) {
+    fun exportToJson() {
         viewModelScope.launch {
+            _state.update { it.copy(syncInProgress = true) }
             try {
                 val tasks = taskRepository.getAllTasksOnce()
                 val exportTasks = tasks.map { task ->
@@ -284,42 +271,75 @@ class SettingsViewModel @Inject constructor(
                     tasks = exportTasks
                 )
                 val json = gson.toJson(exportData)
-                addLog("✓ JSON экспорт подготовлен: ${tasks.size} задач")
-                callback(json)
-            } catch (e: Exception) {
-                addLog("✗ Ошибка экспорта: ${e.message}")
-                callback("")
-            }
-        }
-    }
 
-    /**
-     * Write JSON string to a URI via ContentResolver.
-     * Called after user picks save location via SAF.
-     */
-    fun writeJsonToUri(uri: Uri, json: String) {
-        viewModelScope.launch {
-            try {
                 val ctx = getApplication<Application>()
+                var savedPath: String? = null
+
                 withContext(Dispatchers.IO) {
-                    ctx.contentResolver.openOutputStream(uri)?.use { output ->
-                        output.write(json.toByteArray(Charsets.UTF_8))
-                        output.flush()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        // Android 10+ — save via MediaStore.Downloads (shows in Downloads app)
+                        val contentValues = android.content.ContentValues().apply {
+                            put(MediaStore.Downloads.DISPLAY_NAME, "kislogtd_export.json")
+                            put(MediaStore.Downloads.MIME_TYPE, "application/json")
+                            put(MediaStore.Downloads.IS_PENDING, 1)
+                        }
+                        val uri = ctx.contentResolver.insert(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues
+                        )
+                        if (uri != null) {
+                            ctx.contentResolver.openOutputStream(uri)?.use { out ->
+                                out.write(json.toByteArray(Charsets.UTF_8))
+                                out.flush()
+                            }
+                            contentValues.clear()
+                            contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+                            ctx.contentResolver.update(uri, contentValues, null, null)
+                            savedPath = "Загрузки/kislogtd_export.json"
+                        }
+                    } else {
+                        // Android 8-9 — save to app-specific external Downloads (no permissions needed)
+                        val downloadsDir = ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                        if (downloadsDir != null) {
+                            val file = File(downloadsDir, "kislogtd_export.json")
+                            file.writeText(json, Charsets.UTF_8)
+                            savedPath = file.absolutePath
+                        }
                     }
                 }
-                addLog("✓ Экспорт завершён: файл сохранён")
+
+                if (savedPath != null) {
+                    addLog("✓ Экспорт завершён: $savedPath (${tasks.size} задач)")
+                    _state.update { it.copy(exportResult = "Файл сохранён: $savedPath") }
+                } else {
+                    addLog("✗ Не удалось создать файл экспорта")
+                }
             } catch (e: Exception) {
-                addLog("✗ Ошибка записи файла: ${e.message}")
+                addLog("✗ Ошибка экспорта: ${e.message}")
+            } finally {
+                _state.update { it.copy(syncInProgress = false) }
             }
         }
     }
 
-    /**
-     * Parse JSON string and import all tasks into the database.
-     */
-    fun importFromJson(json: String) {
+    // ═══════════════════════════════════════════════════════════════
+    //  JSON Import — parse content from SAF-chosen URI
+    // ═══════════════════════════════════════════════════════════════
+
+    fun importFromJsonUri(uri: Uri) {
         viewModelScope.launch {
+            _state.update { it.copy(syncInProgress = true) }
             try {
+                val ctx = getApplication<Application>()
+                val json = withContext(Dispatchers.IO) {
+                    ctx.contentResolver.openInputStream(uri)?.use { input ->
+                        BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText()
+                    } ?: ""
+                }
+                if (json.isBlank()) {
+                    addLog("✗ Файл пуст")
+                    return@launch
+                }
+
                 val exportData = gson.fromJson(json, ExportData::class.java)
                 if (exportData.tasks.isEmpty()) {
                     addLog("✗ Файл не содержит задач")
@@ -328,27 +348,9 @@ class SettingsViewModel @Inject constructor(
 
                 var imported = 0
                 for (et in exportData.tasks) {
-                    // Map category string → enum
-                    val category = try {
-                        TaskCategory.valueOf(et.category)
-                    } catch (_: Exception) {
-                        TaskCategory.INBOX
-                    }
-
-                    // Map status string → enum
-                    val status = try {
-                        TaskStatus.valueOf(et.status)
-                    } catch (_: Exception) {
-                        TaskStatus.ACTIVE
-                    }
-
-                    // Map priority string → enum
-                    val priority = try {
-                        TaskPriority.valueOf(et.priority)
-                    } catch (_: Exception) {
-                        TaskPriority.NORMAL
-                    }
-
+                    val category = try { TaskCategory.valueOf(et.category) } catch (_: Exception) { TaskCategory.INBOX }
+                    val status = try { TaskStatus.valueOf(et.status) } catch (_: Exception) { TaskStatus.ACTIVE }
+                    val priority = try { TaskPriority.valueOf(et.priority) } catch (_: Exception) { TaskPriority.NORMAL }
                     val task = Task(
                         id = et.id,
                         title = et.title,
@@ -370,19 +372,17 @@ class SettingsViewModel @Inject constructor(
                     taskRepository.upsertTask(task)
                     imported++
                 }
-
                 addLog("✓ Импорт завершён: $imported задач")
             } catch (e: Exception) {
                 addLog("✗ Ошибка импорта: ${e.message}")
+            } finally {
+                _state.update { it.copy(syncInProgress = false) }
             }
         }
     }
 
     private fun addLog(msg: String) {
-        val timestamp = SimpleDateFormat("HH:mm:ss", Locale("ru"))
-            .format(Date())
-        _state.update {
-            it.copy(syncLog = "$timestamp: $msg\n${it.syncLog}")
-        }
+        val timestamp = SimpleDateFormat("HH:mm:ss", Locale("ru")).format(Date())
+        _state.update { it.copy(syncLog = "$timestamp: $msg\n${it.syncLog}") }
     }
 }

@@ -1,6 +1,5 @@
 package com.kozvits.kislogtd.presentation.settings
 
-import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,11 +22,11 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -46,25 +45,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kozvits.kislogtd.presentation.theme.CategoryDay
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.BufferedReader
-import java.io.InputStreamReader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,43 +68,28 @@ fun SettingsScreen(
     val state by viewModel.state.collectAsState()
     var showSyncLog by remember { mutableStateOf(false) }
     var showTokenDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
-    // Used to hold the generated JSON string until the SAF URI comes back
-    var pendingExportJson by remember { mutableStateOf<String?>(null) }
-
-    // SAF launcher: user picks WHERE to save the export file
-    val exportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/json")
-    ) { uri: Uri? ->
-        if (uri != null && pendingExportJson != null) {
-            viewModel.writeJsonToUri(uri, pendingExportJson!!)
-            pendingExportJson = null
-        }
-    }
-
-    // SAF launcher: user picks WHICH file to import
+    // SAF launcher: user picks a JSON file to import
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
-            scope.launch {
-                try {
-                    val json = withContext(Dispatchers.IO) {
-                        context.contentResolver.openInputStream(uri)?.use { input ->
-                            BufferedReader(InputStreamReader(input, Charsets.UTF_8))
-                                .readText()
-                        } ?: ""
-                    }
-                    if (json.isNotBlank()) {
-                        viewModel.importFromJson(json)
-                    }
-                } catch (e: Exception) {
-                    // error already logged in ViewModel
+            viewModel.importFromJsonUri(uri)
+        }
+    }
+
+    // Show export result dialog if present
+    if (state.exportResult != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissExportResult() },
+            title = { Text("Экспорт") },
+            text = { Text(state.exportResult ?: "") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.dismissExportResult() }) {
+                    Text("OK")
                 }
             }
-        }
+        )
     }
 
     // Token input dialog
@@ -138,14 +116,10 @@ fun SettingsScreen(
                             showTokenDialog = false
                         }
                     }
-                ) {
-                    Text("Подключить")
-                }
+                ) { Text("Подключить") }
             },
             dismissButton = {
-                TextButton(onClick = { showTokenDialog = false }) {
-                    Text("Отмена")
-                }
+                TextButton(onClick = { showTokenDialog = false }) { Text("Отмена") }
             }
         )
     }
@@ -213,8 +187,6 @@ fun SettingsScreen(
                 SectionHeader("Синхронизация с Dropbox")
                 Spacer(Modifier.height(8.dp))
             }
-
-            // Sync status card
             item {
                 Card(
                     modifier = Modifier
@@ -251,7 +223,6 @@ fun SettingsScreen(
                                 )
                             }
                         }
-
                         if (state.lastSyncTime.isNotEmpty()) {
                             Spacer(Modifier.height(8.dp))
                             Text(
@@ -263,8 +234,6 @@ fun SettingsScreen(
                     }
                 }
             }
-
-            // Connect / Disconnect button
             item {
                 if (state.isSyncEnabled) {
                     Button(
@@ -293,8 +262,6 @@ fun SettingsScreen(
                     }
                 }
             }
-
-            // Manual token hint
             if (!state.isSyncEnabled) {
                 item {
                     Text(
@@ -307,8 +274,6 @@ fun SettingsScreen(
                     )
                 }
             }
-
-            // Sync actions
             if (state.isSyncEnabled) {
                 item {
                     Spacer(Modifier.height(8.dp))
@@ -321,11 +286,7 @@ fun SettingsScreen(
                             modifier = Modifier.weight(1f),
                             enabled = !state.syncInProgress
                         ) {
-                            Icon(
-                                Icons.Filled.Upload,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
+                            Icon(Icons.Filled.Upload, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(4.dp))
                             Text("Выгрузить")
                         }
@@ -334,19 +295,13 @@ fun SettingsScreen(
                             modifier = Modifier.weight(1f),
                             enabled = !state.syncInProgress
                         ) {
-                            Icon(
-                                Icons.Filled.Download,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
+                            Icon(Icons.Filled.Download, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(4.dp))
                             Text("Загрузить")
                         }
                     }
                 }
             }
-
-            // Auto-sync settings
             if (state.isSyncEnabled) {
                 item {
                     Spacer(Modifier.height(8.dp))
@@ -358,10 +313,7 @@ fun SettingsScreen(
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        "Автосинхронизация",
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
+                                    Text("Автосинхронизация", style = MaterialTheme.typography.bodyLarge)
                                     Text(
                                         "Автоматически выгружать данные каждые ${state.syncIntervalHours} ч",
                                         style = MaterialTheme.typography.bodySmall,
@@ -375,55 +327,36 @@ fun SettingsScreen(
                             }
                             if (state.autoSync) {
                                 Spacer(Modifier.height(8.dp))
-                                Text(
-                                    "Интервал: ${state.syncIntervalHours} ч",
-                                    style = MaterialTheme.typography.labelMedium
-                                )
+                                Text("Интервал: ${state.syncIntervalHours} ч", style = MaterialTheme.typography.labelMedium)
                                 Slider(
                                     value = state.syncIntervalHours.toFloat(),
-                                    onValueChange = {
-                                        viewModel.setSyncInterval(it.toInt())
-                                    },
-                                    valueRange = 1f..168f,
-                                    steps = 166,
+                                    onValueChange = { viewModel.setSyncInterval(it.toInt()) },
+                                    valueRange = 1f..168f, steps = 166,
                                     modifier = Modifier.fillMaxWidth()
                                 )
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(
-                                        "1ч",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        "7 дней",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Text("1ч", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("7 дней", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
                     }
                 }
             }
-
-            // Sync status log
             item {
                 Spacer(Modifier.height(8.dp))
                 if (state.syncLog.isNotEmpty()) {
                     TextButton(onClick = { showSyncLog = !showSyncLog }) {
-                        Text(
-                            if (showSyncLog) "Скрыть лог" else "Показать лог синхронизации"
-                        )
+                        Text(if (showSyncLog) "Скрыть лог" else "Показать лог синхронизации")
                     }
                     if (showSyncLog) {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                    .copy(alpha = 0.3f)
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                             )
                         ) {
                             Text(
@@ -445,16 +378,8 @@ fun SettingsScreen(
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Успеватель",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "Версия ${state.appVersion}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text("Успеватель", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Версия ${state.appVersion}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(8.dp))
                         Text(
                             "По методике Василия Кислого «Успеватель для интеллигентов»",
@@ -465,13 +390,12 @@ fun SettingsScreen(
                 }
             }
 
-            // ── Danger Zone ────────────────────────────────────────────
+            // ── Data Section ───────────────────────────────────────────
             item {
                 Spacer(Modifier.height(16.dp))
                 SectionHeader("Данные")
                 Spacer(Modifier.height(8.dp))
             }
-            // Retention time
             item {
                 Card(
                     modifier = Modifier
@@ -483,17 +407,10 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Filled.Delete,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                            Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    "Время хранения",
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
+                                Text("Время хранения", style = MaterialTheme.typography.bodyLarge)
                                 Text(
                                     "Автоматически удалять задачи через ${state.retentionDays} дн.",
                                     style = MaterialTheme.typography.bodySmall,
@@ -504,54 +421,37 @@ fun SettingsScreen(
                         Spacer(Modifier.height(8.dp))
                         Slider(
                             value = state.retentionDays.toFloat(),
-                            onValueChange = {
-                                viewModel.setRetentionDays(it.toInt())
-                            },
-                            valueRange = 1f..730f,
-                            steps = 728,
+                            onValueChange = { viewModel.setRetentionDays(it.toInt()) },
+                            valueRange = 1f..730f, steps = 728,
                             modifier = Modifier.fillMaxWidth()
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                "1 день",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                "730 дн.",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Text("1 день", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("730 дн.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
             }
 
-            // JSON Export button
+            // JSON Export — saves directly to Downloads/
             item {
                 OutlinedButton(
-                    onClick = {
-                        viewModel.generateExportJson { json ->
-                            if (json.isNotEmpty()) {
-                                pendingExportJson = json
-                                exportLauncher.launch("kislogtd_export.json")
-                            }
-                        }
-                    },
+                    onClick = { viewModel.exportToJson() },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 2.dp)
+                        .padding(vertical = 2.dp),
+                    enabled = !state.syncInProgress
                 ) {
                     Icon(Icons.Filled.FileDownload, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Экспортировать в JSON (локально)")
+                    Text("Экспортировать в JSON")
                 }
             }
 
-            // JSON Import button
+            // JSON Import — user picks a file, we parse and insert
             item {
                 OutlinedButton(
                     onClick = {
@@ -559,11 +459,12 @@ fun SettingsScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 2.dp)
+                        .padding(vertical = 2.dp),
+                    enabled = !state.syncInProgress
                 ) {
                     Icon(Icons.Filled.FileOpen, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Импортировать из JSON (локально)")
+                    Text("Импортировать из JSON")
                 }
             }
 
@@ -571,14 +472,9 @@ fun SettingsScreen(
             item {
                 TextButton(
                     onClick = { viewModel.showDeleteConfirm() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp)
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
                 ) {
-                    Text(
-                        "Удалить все данные",
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Text("Удалить все данные", color = MaterialTheme.colorScheme.error)
                 }
             }
 
