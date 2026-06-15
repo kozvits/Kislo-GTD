@@ -1,7 +1,7 @@
 package com.kozvits.kislogtd.data.repository
 
-import com.kozvits.kislogtd.data.db.TaskMapper.toDomain
-import com.kozvits.kislogtd.data.db.TaskMapper.toEntity
+import com.kozvits.kislogtd.data.db.toDomain
+import com.kozvits.kislogtd.data.db.toEntity
 import com.kozvits.kislogtd.data.db.dao.TaskDao
 import com.kozvits.kislogtd.domain.model.Task
 import kotlinx.coroutines.flow.Flow

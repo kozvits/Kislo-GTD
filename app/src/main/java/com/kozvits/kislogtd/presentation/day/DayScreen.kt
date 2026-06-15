@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kozvits.kislogtd.domain.model.Task
+import com.kozvits.kislogtd.domain.model.displayTitle
 import com.kozvits.kislogtd.presentation.common.components.EmptyState
 import com.kozvits.kislogtd.presentation.common.components.TaskCard
 import com.kozvits.kislogtd.presentation.navigation.Screen
@@ -42,20 +43,20 @@ fun DayScreen(
                 Text("\"${task.displayTitle}\"")
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.moveTask(task, "**LATER")
-                        showMoveDialog = null
-                    }
-                ) { Text("В **LATER") }
-            },
-            neutralButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.moveTask(task, "*CONTROL")
-                        showMoveDialog = null
-                    }
-                ) { Text("В *CONTROL") }
+                Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(
+                        onClick = {
+                            viewModel.moveTask(task, "**LATER")
+                            showMoveDialog = null
+                        }
+                    ) { Text("В **LATER") }
+                    TextButton(
+                        onClick = {
+                            viewModel.moveTask(task, "*CONTROL")
+                            showMoveDialog = null
+                        }
+                    ) { Text("В *CONTROL") }
+                }
             },
             dismissButton = {
                 TextButton(onClick = { showMoveDialog = null }) { Text("Отмена") }

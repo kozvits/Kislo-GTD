@@ -30,7 +30,8 @@ class DashboardViewModel @Inject constructor(
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
     init {
-        taskRepository.getAllTasks().map { tasks ->
+        viewModelScope.launch {
+            taskRepository.getAllTasks().map { tasks ->
             val active = tasks.filter { it.status == TaskStatus.ACTIVE }
             val now = java.util.Calendar.getInstance().apply {
                 set(java.util.Calendar.HOUR_OF_DAY, 0)
@@ -58,6 +59,7 @@ class DashboardViewModel @Inject constructor(
             emit(DashboardUiState(isLoading = false))
         }.collect { state ->
             _uiState.value = state
+        }
         }
     }
 

@@ -50,7 +50,7 @@
     <string name="weekly_projects">Текущие проекты</string>
     <string name="weekly_maybe">>>MAYBE — мечты</string>
     <string name="weekly_stats">Статистика недели</string>
-    <string name="weekly_stats_desc">Выполнено: %d задач | По проектам: %d (%d%%)</string>
+    <string name="weekly_stats_desc">Выполнено: %1$d задач | По проектам: %2$d (%3$d%%)</string>
     <string name="weekly_journal">Дневниковый обзор</string>
     <string name="weekly_journal_hint">За что ты можешь себя похвалить на этой неделе?</string>
 
@@ -62,7 +62,7 @@
     <string name="empty_maybe">Пока нет мечтаний. Запиши свои желания!</string>
     <string name="items_count">%d записей</string>
     <string name="tasks_completed">Выполнено: %d</string>
-    <string name="subject_group">%s — %d задач</string>
+    <string name="subject_group">%1$s — %2$d задач</string>
     <string name="search">Поиск</string>
     <string name="no_results">Ничего не найдено</string>
     <string name="dark_mode">Тёмная тема</string>

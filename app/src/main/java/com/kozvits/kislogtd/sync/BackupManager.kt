@@ -143,7 +143,7 @@ internal fun weeklyStatsEntityFromJson(json: JSONObject): WeeklyStatsEntity {
         weekStartDate = json.getLong("weekStartDate"),
         totalCompleted = json.getInt("totalCompleted"),
         projectCompleted = json.getInt("projectCompleted"),
-        projectPercent = json.getFloat("projectPercent"),
+        projectPercent = json.getDouble("projectPercent").toFloat(),
         diaryEntry = json.optString("diaryEntry", "")
     )
 }

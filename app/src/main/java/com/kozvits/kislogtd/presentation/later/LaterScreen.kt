@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kozvits.kislogtd.domain.model.Task
+import com.kozvits.kislogtd.domain.model.displayTitle
 import com.kozvits.kislogtd.presentation.common.components.EmptyState
 import com.kozvits.kislogtd.presentation.theme.*
 
@@ -35,7 +36,7 @@ fun LaterScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 8.dp, bottom = 80.dp)
+                contentPadding = PaddingValues(start = 0.dp, top = 8.dp, end = 0.dp, bottom = 80.dp)
             ) {
                 item {
                     Text(

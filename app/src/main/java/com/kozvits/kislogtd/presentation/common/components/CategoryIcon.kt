@@ -52,6 +52,7 @@ fun CategoryIcon(
     )
 }
 
+@Composable
 fun categoryToColor(categoryName: String): Color = when {
     categoryName.startsWith("***IN") || categoryName == "INBOX" -> CategoryInbox
     categoryName.startsWith("**DAY") || categoryName == "DAY" -> CategoryDay
@@ -59,5 +60,5 @@ fun categoryToColor(categoryName: String): Color = when {
     categoryName.startsWith("*CONTROL") || categoryName == "CONTROL" -> CategoryControl
     categoryName.startsWith(">>MAYBE") || categoryName == "MAYBE" -> CategoryMaybe
     categoryName == categoryName.uppercase() && categoryName.length > 2 -> CategoryProject
-    else -> MaterialTheme.DefaultColorScheme.primary
+    else -> MaterialTheme.colorScheme.primary
 }

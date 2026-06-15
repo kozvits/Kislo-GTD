@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kozvits.kislogtd.domain.model.Task
+import com.kozvits.kislogtd.domain.model.displayTitle
 import com.kozvits.kislogtd.presentation.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,5 +1,6 @@
 package com.kozvits.kislogtd.presentation.common.components
 
+import com.kozvits.kislogtd.domain.model.displayTitle
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

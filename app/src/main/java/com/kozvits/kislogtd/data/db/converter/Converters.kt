@@ -25,9 +25,4 @@ class Converters {
     @TypeConverter
     fun toTaskPriority(value: String): TaskPriority = TaskPriority.valueOf(value)
 
-    @TypeConverter
-    fun fromLongNullable(value: Long?): Long? = value
-
-    @TypeConverter
-    fun toLongNullable(value: Long?): Long? = value
 }
