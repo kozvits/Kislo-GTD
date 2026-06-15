@@ -19,6 +19,7 @@ interface TaskRepository {
     suspend fun getCompletedBetween(start: Long, end: Long): List<Task>
     fun getTasksByProject(projectId: String): Flow<List<Task>>
     fun getTasksByStatus(status: String): Flow<List<Task>>
+    suspend fun getAllTasksOnce(): List<Task>
 }
 
 @Singleton
@@ -72,5 +73,9 @@ class TaskRepositoryImpl @Inject constructor(
         return taskDao.getByStatus(status).map { entities ->
             entities.map { it.toDomain() }
         }
+    }
+
+    override suspend fun getAllTasksOnce(): List<Task> {
+        return taskDao.getAllTasksList().map { it.toDomain() }
     }
 }

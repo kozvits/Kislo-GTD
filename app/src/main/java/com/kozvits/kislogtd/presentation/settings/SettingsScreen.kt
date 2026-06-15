@@ -1,5 +1,9 @@
 package com.kozvits.kislogtd.presentation.settings
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,6 +23,7 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Upload
@@ -45,14 +50,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kozvits.kislogtd.presentation.theme.CategoryDay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +75,44 @@ fun SettingsScreen(
     val state by viewModel.state.collectAsState()
     var showSyncLog by remember { mutableStateOf(false) }
     var showTokenDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // Used to hold the generated JSON string until the SAF URI comes back
+    var pendingExportJson by remember { mutableStateOf<String?>(null) }
+
+    // SAF launcher: user picks WHERE to save the export file
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        if (uri != null && pendingExportJson != null) {
+            viewModel.writeJsonToUri(uri, pendingExportJson!!)
+            pendingExportJson = null
+        }
+    }
+
+    // SAF launcher: user picks WHICH file to import
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch {
+                try {
+                    val json = withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.use { input ->
+                            BufferedReader(InputStreamReader(input, Charsets.UTF_8))
+                                .readText()
+                        } ?: ""
+                    }
+                    if (json.isNotBlank()) {
+                        viewModel.importFromJson(json)
+                    }
+                } catch (e: Exception) {
+                    // error already logged in ViewModel
+                }
+            }
+        }
+    }
 
     // Token input dialog
     if (showTokenDialog) {
@@ -479,9 +529,18 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            // JSON Export button
             item {
                 OutlinedButton(
-                    onClick = { /* local export - placeholder */ },
+                    onClick = {
+                        viewModel.generateExportJson { json ->
+                            if (json.isNotEmpty()) {
+                                pendingExportJson = json
+                                exportLauncher.launch("kislogtd_export.json")
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 2.dp)
@@ -491,18 +550,24 @@ fun SettingsScreen(
                     Text("Экспортировать в JSON (локально)")
                 }
             }
+
+            // JSON Import button
             item {
                 OutlinedButton(
-                    onClick = { /* local import - placeholder */ },
+                    onClick = {
+                        importLauncher.launch(arrayOf("application/json", "*/*"))
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 2.dp)
                 ) {
-                    Icon(Icons.Filled.Upload, contentDescription = null)
+                    Icon(Icons.Filled.FileOpen, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("Импортировать из JSON (локально)")
                 }
             }
+
+            // Delete all data
             item {
                 TextButton(
                     onClick = { viewModel.showDeleteConfirm() },
