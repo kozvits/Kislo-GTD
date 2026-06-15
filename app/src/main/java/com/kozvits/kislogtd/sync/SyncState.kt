@@ -24,7 +24,9 @@ data class SyncSettings(
     val lastSyncTimestamp: Long = 0L,
     val autoSync: Boolean = true,
     val syncIntervalHours: Int = 24,
-    val lastSyncStatus: String = "never"
+    val lastSyncStatus: String = "never",
+    val isDarkTheme: Boolean = false,
+    val themeUserSet: Boolean = false
 )
 
 @Singleton
@@ -39,6 +41,8 @@ class SyncStateRepository @Inject constructor(
         private val KEY_AUTO_SYNC = booleanPreferencesKey("auto_sync")
         private val KEY_SYNC_INTERVAL = intPreferencesKey("sync_interval_hours")
         private val KEY_LAST_STATUS = stringPreferencesKey("last_sync_status")
+        private val KEY_IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
+        private val KEY_THEME_USER_SET = booleanPreferencesKey("theme_user_set")
     }
 
     val settings: Flow<SyncSettings> = context.syncStore.data.map { prefs ->
@@ -49,7 +53,9 @@ class SyncStateRepository @Inject constructor(
             lastSyncTimestamp = prefs[KEY_LAST_SYNC] ?: 0L,
             autoSync = prefs[KEY_AUTO_SYNC] ?: true,
             syncIntervalHours = prefs[KEY_SYNC_INTERVAL] ?: 24,
-            lastSyncStatus = prefs[KEY_LAST_STATUS] ?: "never"
+            lastSyncStatus = prefs[KEY_LAST_STATUS] ?: "never",
+            isDarkTheme = prefs[KEY_IS_DARK_THEME] ?: false,
+            themeUserSet = prefs[KEY_THEME_USER_SET] ?: false
         )
     }
 
@@ -80,6 +86,13 @@ class SyncStateRepository @Inject constructor(
         context.syncStore.edit { prefs ->
             prefs[KEY_AUTO_SYNC] = enabled
             prefs[KEY_SYNC_INTERVAL] = intervalHours
+        }
+    }
+
+    suspend fun setDarkTheme(enabled: Boolean) {
+        context.syncStore.edit { prefs ->
+            prefs[KEY_IS_DARK_THEME] = enabled
+            prefs[KEY_THEME_USER_SET] = true
         }
     }
 }

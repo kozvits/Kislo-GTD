@@ -143,15 +143,14 @@ fun SettingsScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Тема", style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                "Светлая / Тёмная (скоро)",
+                                "Автоматическая / Ручная",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         Switch(
                             checked = state.isDarkTheme,
-                            onCheckedChange = { viewModel.toggleTheme() },
-                            enabled = false // Coming soon
+                            onCheckedChange = { viewModel.toggleTheme() }
                         )
                     }
                 }

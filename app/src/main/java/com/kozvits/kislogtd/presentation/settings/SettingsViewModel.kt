@@ -45,7 +45,13 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             syncStateRepository.settings.collect { settings ->
                 _state.update {
+                    val effectiveDark = if (settings.themeUserSet) {
+                        settings.isDarkTheme
+                    } else {
+                        isSystemInDarkMode()
+                    }
                     it.copy(
+                        isDarkTheme = effectiveDark,
                         isSyncEnabled = settings.isEnabled,
                         autoSync = settings.autoSync,
                         syncIntervalHours = settings.syncIntervalHours,
@@ -84,8 +90,19 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    @Suppress("DEPRECATION")
+    private fun isSystemInDarkMode(): Boolean {
+        val mode = getApplication<Application>().resources.configuration.uiMode and
+                android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        return mode == android.content.res.Configuration.UI_MODE_NIGHT_YES
+    }
+
     fun toggleTheme() {
-        _state.update { it.copy(isDarkTheme = !it.isDarkTheme) }
+        viewModelScope.launch {
+            val newValue = !_state.value.isDarkTheme
+            syncStateRepository.setDarkTheme(newValue)
+            _state.update { it.copy(isDarkTheme = newValue) }
+        }
     }
 
     fun setManualToken(token: String) {
