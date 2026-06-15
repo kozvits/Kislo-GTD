@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -420,6 +421,64 @@ fun SettingsScreen(
                 SectionHeader("Данные")
                 Spacer(Modifier.height(8.dp))
             }
+            // Retention time
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Время хранения",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Text(
+                                    "Автоматически удалять задачи через ${state.retentionDays} дн.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Slider(
+                            value = state.retentionDays.toFloat(),
+                            onValueChange = {
+                                viewModel.setRetentionDays(it.toInt())
+                            },
+                            valueRange = 1f..730f,
+                            steps = 728,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "1 день",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                "730 дн.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
             item {
                 OutlinedButton(
                     onClick = { /* local export - placeholder */ },
@@ -430,6 +489,18 @@ fun SettingsScreen(
                     Icon(Icons.Filled.FileDownload, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("Экспортировать в JSON (локально)")
+                }
+            }
+            item {
+                OutlinedButton(
+                    onClick = { /* local import - placeholder */ },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp)
+                ) {
+                    Icon(Icons.Filled.Upload, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Импортировать из JSON (локально)")
                 }
             }
             item {

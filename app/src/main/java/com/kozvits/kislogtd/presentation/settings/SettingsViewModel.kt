@@ -27,7 +27,8 @@ data class SettingsUiState(
     val syncIntervalHours: Int = 24,
     val syncLog: String = "",
     val syncInProgress: Boolean = false,
-    val appVersion: String = "1.0.0"
+    val appVersion: String = "1.0.0",
+    val retentionDays: Int = 90
 )
 
 @HiltViewModel
@@ -55,6 +56,7 @@ class SettingsViewModel @Inject constructor(
                         isSyncEnabled = settings.isEnabled,
                         autoSync = settings.autoSync,
                         syncIntervalHours = settings.syncIntervalHours,
+                        retentionDays = settings.retentionDays,
                         lastSyncTime = if (settings.lastSyncTimestamp > 0L) {
                             SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("ru"))
                                 .format(Date(settings.lastSyncTimestamp))
@@ -182,6 +184,15 @@ class SettingsViewModel @Inject constructor(
                 val ctx = getApplication<Application>()
                 SyncWorker.schedule(ctx, clamped)
             }
+        }
+    }
+
+    fun setRetentionDays(days: Int) {
+        viewModelScope.launch {
+            val clamped = days.coerceIn(1, 730)
+            syncStateRepository.setRetentionDays(clamped)
+            _state.update { it.copy(retentionDays = clamped) }
+            addLog("Время хранения: $clamped дн.")
         }
     }
 

@@ -217,6 +217,16 @@ fun DashboardScreen(
                     onClick = { navController.navigate(Screen.WeeklyReview.route) }
                 )
             }
+            item {
+                CategoryTile(
+                    title = "Выполненные задачи",
+                    subtitle = "Архив завершённых дел",
+                    count = 0,
+                    icon = Icons.Filled.CheckCircle,
+                    color = CategoryDay,
+                    onClick = { navController.navigate(Screen.CompletedTasks.route) }
+                )
+            }
         }
 
         // FAB

@@ -41,6 +41,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE project_id = :projectId ORDER BY sort_order ASC, created_at DESC")
     fun getByProjectId(projectId: String): Flow<List<TaskEntity>>
 
+    @Query("SELECT * FROM tasks WHERE status = :status ORDER BY completed_at DESC, created_at DESC")
+    fun getByStatus(status: String): Flow<List<TaskEntity>>
+
     // ── Sync support ─────────────────────────────────────────────────
 
     @Query("SELECT * FROM tasks")

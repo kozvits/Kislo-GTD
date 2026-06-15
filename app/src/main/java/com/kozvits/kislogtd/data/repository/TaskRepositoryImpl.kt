@@ -18,6 +18,7 @@ interface TaskRepository {
     suspend fun deleteTask(task: Task)
     suspend fun getCompletedBetween(start: Long, end: Long): List<Task>
     fun getTasksByProject(projectId: String): Flow<List<Task>>
+    fun getTasksByStatus(status: String): Flow<List<Task>>
 }
 
 @Singleton
@@ -63,6 +64,12 @@ class TaskRepositoryImpl @Inject constructor(
 
     override fun getTasksByProject(projectId: String): Flow<List<Task>> {
         return taskDao.getByProjectId(projectId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    override fun getTasksByStatus(status: String): Flow<List<Task>> {
+        return taskDao.getByStatus(status).map { entities ->
             entities.map { it.toDomain() }
         }
     }

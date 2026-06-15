@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Workspaces
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +32,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -56,6 +58,7 @@ import com.kozvits.kislogtd.presentation.maybe.MaybeScreen
 import com.kozvits.kislogtd.presentation.project.ProjectScreen
 import com.kozvits.kislogtd.presentation.review.DailyReviewScreen
 import com.kozvits.kislogtd.presentation.review.WeeklyReviewScreen
+import com.kozvits.kislogtd.presentation.completed.CompletedTasksScreen
 import com.kozvits.kislogtd.presentation.taskdetail.TaskDetailScreen
 import com.kozvits.kislogtd.presentation.settings.SettingsScreen
 import kotlinx.coroutines.launch
@@ -72,6 +75,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object TaskDetail : Screen("task/{taskId}", "Задача", Icons.Filled.Task)
     data object DailyReview : Screen("daily_review", "Утренний регламент", Icons.Filled.Today)
     data object WeeklyReview : Screen("weekly_review", "Недельный обзор", Icons.Filled.Assessment)
+    data object CompletedTasks : Screen("completed_tasks", "Выполненные задачи", Icons.Filled.CheckCircle)
     data object Settings : Screen("settings", "Настройки", Icons.Filled.Settings)
 }
 
@@ -184,7 +188,28 @@ fun AppNavHost() {
             },
             topBar = {
                 TopAppBar(
-                    title = { Text(text = currentScreen?.title ?: "Успеватель") },
+                    title = {
+                        TextButton(onClick = {
+                            navController.navigate(Screen.Dashboard.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.Home,
+                                contentDescription = "Главная",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = currentScreen?.title ?: "Успеватель",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                    },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(
@@ -244,6 +269,9 @@ fun AppNavHost() {
                 }
                 composable(Screen.WeeklyReview.route) {
                     WeeklyReviewScreen(navController)
+                }
+                composable(Screen.CompletedTasks.route) {
+                    CompletedTasksScreen(navController)
                 }
                 composable(Screen.Settings.route) {
                     SettingsScreen(navController)
