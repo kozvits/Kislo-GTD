@@ -1,5 +1,7 @@
 package com.kozvits.kislogtd.presentation.project
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +28,47 @@ fun ProjectScreen(
 ) {
     val projects by viewModel.projectSummaries.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
+    var showPropertiesDialog by remember { mutableStateOf<ProjectSummary?>(null) }
+
+    // Project properties dialog
+    if (showPropertiesDialog != null) {
+        val proj = showPropertiesDialog!!
+        var newName by remember(proj) { mutableStateOf(proj.name) }
+        AlertDialog(
+            onDismissRequest = { showPropertiesDialog = null },
+            title = { Text("Свойства проекта") },
+            text = {
+                Column {
+                    Text("Текущее название:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = newName,
+                        onValueChange = { newName = it.uppercase() },
+                        label = { Text("Название") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text("Задач: ${proj.totalTasks}, выполнено: ${proj.completedTasks}", style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = {
+                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(
+                        onClick = {
+                            if (newName.isNotBlank() && newName.length > 2 && newName != proj.name) {
+                                viewModel.renameProject(proj.name, newName)
+                            }
+                            showPropertiesDialog = null
+                        }
+                    ) { Text("Переименовать") }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPropertiesDialog = null }) { Text("Закрыть") }
+            }
+        )
+    }
 
     // Create project dialog
     if (showCreateDialog) {
@@ -73,9 +116,12 @@ fun ProjectScreen(
                 }
 
                 items(projects, key = { it.name }) { project ->
+                    @OptIn(ExperimentalFoundationApi::class)
                     Card(
-                        onClick = { navController.navigate("project/${project.name}") },
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).combinedClickable(
+                            onClick = { navController.navigate("project/${project.name}") },
+                            onLongClick = { showPropertiesDialog = project }
+                        ),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         shape = RoundedCornerShape(16.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)

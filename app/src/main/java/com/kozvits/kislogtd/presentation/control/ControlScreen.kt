@@ -1,5 +1,7 @@
 package com.kozvits.kislogtd.presentation.control
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -63,7 +65,8 @@ fun ControlScreen(
                         task = task,
                         onDone = { viewModel.markDone(task) },
                         onMoveToDay = { viewModel.moveToDay(task) },
-                        onSetReminder = { /* TODO: date picker */ }
+                        onSetReminder = { /* TODO: date picker */ },
+                        onLongClick = { navController.navigate("task/${task.id}") }
                     )
                 }
             }
@@ -71,17 +74,23 @@ fun ControlScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ControlTaskCard(
     task: Task,
     onDone: () -> Unit,
     onMoveToDay: () -> Unit,
-    onSetReminder: () -> Unit
+    onSetReminder: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 3.dp),
+            .padding(horizontal = 12.dp, vertical = 3.dp)
+            .combinedClickable(
+                onClick = { /* no-op, buttons handle actions */ },
+                onLongClick = onLongClick
+            ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)

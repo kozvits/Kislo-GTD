@@ -203,6 +203,49 @@ fun TaskDetailScreen(
                 }
             }
 
+            Spacer(Modifier.height(16.dp))
+
+            // Project selector
+            val projectNames by viewModel.projectNames.collectAsState()
+            var projectExpanded by remember { mutableStateOf(false) }
+
+            Text("Проект:", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            ExposedDropdownMenuBox(
+                expanded = projectExpanded,
+                onExpandedChange = { projectExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = t.projectId ?: "Без проекта",
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = projectExpanded) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor(),
+                    singleLine = true
+                )
+                ExposedDropdownMenu(
+                    expanded = projectExpanded,
+                    onDismissRequest = { projectExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Без проекта") },
+                        onClick = {
+                            viewModel.updateProject(null)
+                            projectExpanded = false
+                        }
+                    )
+                    projectNames.forEach { proj ->
+                        DropdownMenuItem(
+                            text = { Text(proj) },
+                            onClick = {
+                                viewModel.updateProject(proj)
+                                projectExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
             Spacer(Modifier.height(32.dp))
         }
     }

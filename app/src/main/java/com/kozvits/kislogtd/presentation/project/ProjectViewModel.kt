@@ -67,6 +67,19 @@ class ProjectViewModel @Inject constructor(
         }
     }
 
+    fun renameProject(oldName: String, newName: String) {
+        viewModelScope.launch {
+            // Update all tasks that reference this project
+            val all = taskRepository.getAllTasks().first()
+            all.filter { it.categoryName == oldName }.forEach { t ->
+                taskRepository.upsertTask(t.copy(categoryName = newName))
+            }
+            all.filter { it.projectId == oldName }.forEach { t ->
+                taskRepository.upsertTask(t.copy(projectId = newName))
+            }
+        }
+    }
+
     fun addTaskToProject(projectName: String, title: String, subjectPrefix: String? = "Я") {
         viewModelScope.launch {
             taskRepository.upsertTask(

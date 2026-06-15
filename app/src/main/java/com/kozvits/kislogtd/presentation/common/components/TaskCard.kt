@@ -2,7 +2,9 @@ package com.kozvits.kislogtd.presentation.common.components
 
 import com.kozvits.kislogtd.domain.model.displayTitle
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,12 +34,13 @@ import com.kozvits.kislogtd.domain.model.Task
 import com.kozvits.kislogtd.domain.model.TaskStatus
 import com.kozvits.kislogtd.presentation.theme.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TaskCard(
     task: Task,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
     onSwipeLeft: (() -> Unit)? = null,
     onSwipeRight: (() -> Unit)? = null
 ) {
@@ -49,10 +52,13 @@ fun TaskCard(
     )
 
     Card(
-        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 3.dp),
+            .padding(horizontal = 12.dp, vertical = 3.dp)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick ?: onClick
+            ),
         colors = CardDefaults.cardColors(containerColor = surfaceColor),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)

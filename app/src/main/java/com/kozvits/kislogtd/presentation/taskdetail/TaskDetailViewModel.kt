@@ -20,6 +20,15 @@ class TaskDetailViewModel @Inject constructor(
     val task: StateFlow<Task?> = taskRepository.getTaskById(taskId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    /** All known project names (uppercase categoryName values). */
+    val projectNames: StateFlow<List<String>> = taskRepository.getAllTasks().map { tasks ->
+        tasks.mapNotNull { it.categoryName }
+            .filter { name ->
+                name == name.uppercase() && name.length > 2 &&
+                !name.startsWith("*") && !name.startsWith(">") && !name.startsWith("\\") && !name.startsWith("ЯЯ")
+            }.distinct().sorted()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     fun updateTitle(newTitle: String) {
         viewModelScope.launch {
             val current = task.value ?: return@launch
@@ -38,6 +47,13 @@ class TaskDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val current = task.value ?: return@launch
             taskRepository.upsertTask(current.copy(category = taskCategory, categoryName = newCategory))
+        }
+    }
+
+    fun updateProject(projectId: String?) {
+        viewModelScope.launch {
+            val current = task.value ?: return@launch
+            taskRepository.upsertTask(current.copy(projectId = projectId))
         }
     }
 

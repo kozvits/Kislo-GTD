@@ -56,6 +56,7 @@ import com.kozvits.kislogtd.presentation.inbox.InboxScreen
 import com.kozvits.kislogtd.presentation.later.LaterScreen
 import com.kozvits.kislogtd.presentation.maybe.MaybeScreen
 import com.kozvits.kislogtd.presentation.project.ProjectScreen
+import com.kozvits.kislogtd.presentation.project.ProjectDetailScreen
 import com.kozvits.kislogtd.presentation.review.DailyReviewScreen
 import com.kozvits.kislogtd.presentation.review.WeeklyReviewScreen
 import com.kozvits.kislogtd.presentation.completed.CompletedTasksScreen
@@ -254,7 +255,10 @@ fun AppNavHost() {
                     arguments = listOf(
                         navArgument("projectId") { type = NavType.StringType }
                     )
-                ) { /* Project detail with list of its tasks */ }
+                ) { backStackEntry ->
+                    val projectId = backStackEntry.arguments?.getString("projectId") ?: ""
+                    ProjectDetailScreen(projectId = projectId, navController = navController)
+                }
                 composable(
                     route = Screen.TaskDetail.route,
                     arguments = listOf(

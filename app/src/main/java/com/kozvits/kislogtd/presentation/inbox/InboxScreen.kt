@@ -1,5 +1,7 @@
 package com.kozvits.kislogtd.presentation.inbox
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -178,7 +180,8 @@ fun InboxScreen(
                             processTitle = task.title
                             showProcessDialog = task
                         },
-                        onDelete = { viewModel.deleteTask(task) }
+                        onDelete = { viewModel.deleteTask(task) },
+                        onLongClick = { navController.navigate("task/${task.id}") }
                     )
                 }
             }
@@ -198,16 +201,22 @@ fun InboxScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun InboxTaskCard(
     task: Task,
     onProcess: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 3.dp),
+            .padding(horizontal = 12.dp, vertical = 3.dp)
+            .combinedClickable(
+                onClick = { /* no-op, card buttons handle actions */ },
+                onLongClick = onLongClick
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         ),
