@@ -21,4 +21,20 @@ interface WeeklyStatsDao {
 
     @Query("SELECT * FROM weekly_stats ORDER BY week_start_date DESC LIMIT 1")
     suspend fun getLatest(): WeeklyStatsEntity?
+
+    // ── Sync support ─────────────────────────────────────────────────
+
+    @Query("SELECT * FROM weekly_stats")
+    suspend fun getAllStatsList(): List<WeeklyStatsEntity>
+
+    @Query("DELETE FROM weekly_stats")
+    suspend fun deleteAll()
+
+    @androidx.room.Transaction
+    suspend fun replaceAll(stats: List<WeeklyStatsEntity>) {
+        deleteAll()
+        for (stat in stats) {
+            upsert(stat)
+        }
+    }
 }

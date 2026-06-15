@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Task
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Workspaces
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,6 +57,7 @@ import com.kozvits.kislogtd.presentation.project.ProjectScreen
 import com.kozvits.kislogtd.presentation.review.DailyReviewScreen
 import com.kozvits.kislogtd.presentation.review.WeeklyReviewScreen
 import com.kozvits.kislogtd.presentation.taskdetail.TaskDetailScreen
+import com.kozvits.kislogtd.presentation.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
@@ -70,6 +72,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object TaskDetail : Screen("task/{taskId}", "Задача", Icons.Filled.Task)
     data object DailyReview : Screen("daily_review", "Утренний регламент", Icons.Filled.Today)
     data object WeeklyReview : Screen("weekly_review", "Недельный обзор", Icons.Filled.Assessment)
+    data object Settings : Screen("settings", "Настройки", Icons.Filled.Settings)
 }
 
 val bottomNavItems = listOf(
@@ -84,7 +87,8 @@ val drawerNavItems = listOf(
     Screen.Maybe,
     Screen.ProjectList,
     Screen.DailyReview,
-    Screen.WeeklyReview
+    Screen.WeeklyReview,
+    Screen.Settings
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -240,6 +244,9 @@ fun AppNavHost() {
                 }
                 composable(Screen.WeeklyReview.route) {
                     WeeklyReviewScreen(navController)
+                }
+                composable(Screen.Settings.route) {
+                    SettingsScreen(navController)
                 }
             }
         }

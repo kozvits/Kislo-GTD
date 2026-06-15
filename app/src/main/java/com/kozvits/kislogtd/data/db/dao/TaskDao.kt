@@ -40,4 +40,20 @@ interface TaskDao {
 
     @Query("SELECT * FROM tasks WHERE project_id = :projectId ORDER BY sort_order ASC, created_at DESC")
     fun getByProjectId(projectId: String): Flow<List<TaskEntity>>
+
+    // ── Sync support ─────────────────────────────────────────────────
+
+    @Query("SELECT * FROM tasks")
+    suspend fun getAllTasksList(): List<TaskEntity>
+
+    @Query("DELETE FROM tasks")
+    suspend fun deleteAll()
+
+    @androidx.room.Transaction
+    suspend fun replaceAll(tasks: List<TaskEntity>) {
+        deleteAll()
+        for (task in tasks) {
+            upsert(task)
+        }
+    }
 }
