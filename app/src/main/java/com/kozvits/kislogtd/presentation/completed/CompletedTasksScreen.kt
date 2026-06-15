@@ -1,5 +1,7 @@
 package com.kozvits.kislogtd.presentation.completed
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,7 +36,7 @@ fun CompletedTasksScreen(
         if (tasks.isEmpty()) {
             EmptyState(
                 icon = Icons.Filled.CheckCircle,
-                message = "Нет выполненных задач.\\nПродуктивного дня!"
+                message = "Нет выполненных задач.\nПродуктивного дня!"
             )
         } else {
             LazyColumn(
@@ -59,21 +61,33 @@ fun CompletedTasksScreen(
                 }
 
                 items(tasks, key = { it.id }) { task ->
-                    CompletedTaskCard(task = task)
+                    CompletedTaskCard(
+                        task = task,
+                        onDuplicate = { viewModel.duplicateToInbox(task) }
+                    )
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CompletedTaskCard(task: Task) {
+fun CompletedTaskCard(
+    task: Task,
+    onDuplicate: () -> Unit
+) {
     val dateFormat = remember { SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("ru")) }
+    var showMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 3.dp),
+            .padding(horizontal = 12.dp, vertical = 3.dp)
+            .combinedClickable(
+                onClick = { /* no-op */ },
+                onLongClick = { showMenu = true }
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -103,6 +117,23 @@ fun CompletedTaskCard(task: Task) {
                         "Завершено: ${dateFormat.format(Date(task.completedAt))}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Context menu area
+            Box {
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Дублировать") },
+                        onClick = {
+                            showMenu = false
+                            onDuplicate()
+                        },
+                        leadingIcon = { Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(20.dp)) }
                     )
                 }
             }
