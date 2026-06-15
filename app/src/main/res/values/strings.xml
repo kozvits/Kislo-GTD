@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Успеватель</string>
+    <string name="app_name_full">Успеватель Василия Кислого</string>
+
+    <!-- Category names -->
+    <string name="category_inbox">***IN</string>
+    <string name="category_day">**DAY</string>
+    <string name="category_later">**LATER</string>
+    <string name="category_control">*CONTROL</string>
+    <string name="category_maybe">>>MAYBE</string>
+
+    <!-- Category descriptions -->
+    <string name="inbox_desc">Входящий поток. Захватывай всё!</string>
+    <string name="day_desc">Текущие действия на сегодня</string>
+    <string name="later_desc">Отложено на неопределённое время</string>
+    <string name="control_desc">Ожидание ответа от других</string>
+    <string name="maybe_desc">Мечты и воздушные замки</string>
+
+    <!-- Actions -->
+    <string name="add_task">Добавить задачу</string>
+    <string name="quick_capture">Быстрый захват</string>
+    <string name="voice_capture">Голосовой захват</string>
+    <string name="daily_review">Утренний регламент</string>
+    <string name="weekly_review">Недельный обзор</string>
+    <string name="done">Готово</string>
+    <string name="cancel">Отмена</string>
+    <string name="delete">Удалить</string>
+    <string name="save">Сохранить</string>
+    <string name="edit">Редактировать</string>
+    <string name="move_to_day">В **DAY</string>
+    <string name="move_to_later">В **LATER</string>
+    <string name="move_to_control">В *CONTROL</string>
+    <string name="mark_done">Выполнено</string>
+    <string name="process">Обработать</string>
+
+    <!-- Daily Review steps -->
+    <string name="step_inbox">Шаг 1: Обработать ***IN</string>
+    <string name="step_inbox_desc">Преврати каждую запись в элементарное действие</string>
+    <string name="step_day">Шаг 2: Организовать **DAY</string>
+    <string name="step_day_desc">Проверь и перераспредели текущие действия</string>
+    <string name="step_later">Шаг 3: Пополнить **DAY из **LATER</string>
+    <string name="step_later_desc">Перенеси подходящие дела, если есть место</string>
+    <string name="step_control">Шаг 4: Просмотреть *CONTROL</string>
+    <string name="step_control_desc">Отметь выполненные, проверь сроки</string>
+    <string name="step_projects">Шаг 5: Текущие проекты</string>
+    <string name="step_projects_desc">Быстрый взгляд на проекты</string>
+
+    <!-- Weekly Review -->
+    <string name="weekly_projects">Текущие проекты</string>
+    <string name="weekly_maybe">>>MAYBE — мечты</string>
+    <string name="weekly_stats">Статистика недели</string>
+    <string name="weekly_stats_desc">Выполнено: %d задач | По проектам: %d (%d%%)</string>
+    <string name="weekly_journal">Дневниковый обзор</string>
+    <string name="weekly_journal_hint">За что ты можешь себя похвалить на этой неделе?</string>
+
+    <!-- General -->
+    <string name="empty_inbox">Входящий поток пуст. Запиши сюда всё, что приходит в голову!</string>
+    <string name="empty_day">Нет текущих действий на сегодня</string>
+    <string name="empty_later">Нет отложенных дел</string>
+    <string name="empty_control">Нет действий в контроле</string>
+    <string name="empty_maybe">Пока нет мечтаний. Запиши свои желания!</string>
+    <string name="items_count">%d записей</string>
+    <string name="tasks_completed">Выполнено: %d</string>
+    <string name="subject_group">%s — %d задач</string>
+    <string name="search">Поиск</string>
+    <string name="no_results">Ничего не найдено</string>
+    <string name="dark_mode">Тёмная тема</string>
+    <string name="about">О приложении</string>
+
+    <!-- Widget -->
+    <string name="widget_description">Быстрый доступ к Успевателю</string>
+    <string name="version">Версия %s</string>
+
+    <!-- Task hints -->
+    <string name="task_title_hint">Формат: Имя\\глагол объект</string>
+    <string name="task_notes_hint">Заметки, идеи, история…</string>
+    <string name="projects">Проекты</string>
+    <string name="no_projects">Нет проектов</string>
+    <string name="new_project">Новый проект</string>
+    <string name="project_name_hint">Название проекта (ЗАГЛАВНЫМИ)</string>
+    <string name="my_tasks">Я\</string>
+    <string name="stem_tasks">Стволовые задачи</string>
+    <string name="urgent_tasks">Срочные</string>
+    <string name="current_tasks">Текущие</string>
+    <string name="start_date">Дата начала</string>
+    <string name="due_date">Срок</string>
+    <string name="repeat">Повтор</string>
+    <string name="category">Категория</string>
+    <string name="project">Проект</string>
+    <string name="priority">Приоритет</string>
+    <string name="priority_high">Высокий</string>
+    <string name="priority_normal">Обычный</string>
+    <string name="priority_low">Низкий</string>
+</resources>
