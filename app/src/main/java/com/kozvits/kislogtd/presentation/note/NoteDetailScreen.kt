@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.kozvits.kislogtd.domain.model.Note
+import com.kozvits.kislogtd.presentation.components.ToodledoDatePickerDialog
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -131,6 +132,47 @@ fun NoteDetailScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // Date reminder section (Toodledo-style)
+            var showDatePicker by remember { mutableStateOf(false) }
+            Text("Напоминание", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val reminderDate = uiState.note?.reminderDate
+                OutlinedButton(onClick = { showDatePicker = true }) {
+                    Icon(Icons.Filled.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        if (reminderDate != null) df.format(Date(reminderDate))
+                        else "Назначить дату",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+                if (reminderDate != null) {
+                    OutlinedButton(
+                        onClick = { viewModel.setReminderDate(null) },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Очистить", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+            if (showDatePicker) {
+                ToodledoDatePickerDialog(
+                    initialDateMillis = uiState.note?.reminderDate,
+                    onDateSelected = { millis ->
+                        viewModel.setReminderDate(millis)
+                        showDatePicker = false
+                    },
+                    onDismiss = { showDatePicker = false }
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             // Preview section (Toodledo-style preview panel)
             if (uiState.body.isNotBlank()) {
                 Card(
@@ -173,6 +215,9 @@ fun NoteDetailScreen(
                         }
                         if (note.categoryName != null) {
                             MetaRow("Категория", note.categoryName)
+                        }
+                        if (note.reminderDate != null) {
+                            MetaRow("Напоминание", df.format(Date(note.reminderDate!!)))
                         }
                     }
                 }

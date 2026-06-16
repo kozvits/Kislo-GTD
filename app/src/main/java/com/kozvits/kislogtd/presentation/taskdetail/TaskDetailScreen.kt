@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kozvits.kislogtd.domain.model.*
 import com.kozvits.kislogtd.presentation.common.components.CategoryIcon
+import com.kozvits.kislogtd.presentation.components.ToodledoDatePickerDialog
 import com.kozvits.kislogtd.presentation.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -50,29 +51,13 @@ fun TaskDetailScreen(
         )
     }
 
-    // Date picker dialog
+    // Toodledo-style date picker dialog
     if (showDatePicker && task != null) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = task!!.startDate
+        ToodledoDatePickerDialog(
+            initialDateMillis = task!!.startDate,
+            onDateSelected = { millis -> viewModel.setDate(millis) },
+            onDismiss = { showDatePicker = false }
         )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { viewModel.setDate(it) }
-                    showDatePicker = false
-                }) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Отмена")
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
     }
 
     LaunchedEffect(task?.id) {

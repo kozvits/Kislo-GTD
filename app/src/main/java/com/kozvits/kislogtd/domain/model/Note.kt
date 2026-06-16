@@ -9,5 +9,6 @@ data class Note(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val taskId: String? = null,
-    val categoryName: String? = null
+    val categoryName: String? = null,
+    val reminderDate: Long? = null
 )

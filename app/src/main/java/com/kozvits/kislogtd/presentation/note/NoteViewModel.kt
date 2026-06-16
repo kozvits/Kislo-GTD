@@ -90,6 +90,12 @@ class NoteDetailViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(body = body)
     }
 
+    fun setReminderDate(millis: Long?) {
+        _uiState.value = _uiState.value.copy(
+            note = _uiState.value.note?.copy(reminderDate = millis)
+        )
+    }
+
     fun saveNote(onSaved: (String) -> Unit) {
         val state = _uiState.value
         val note = state.note ?: return

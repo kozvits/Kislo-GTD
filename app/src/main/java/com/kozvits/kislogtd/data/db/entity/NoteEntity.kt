@@ -11,5 +11,6 @@ data class NoteEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val taskId: String? = null,
-    val categoryName: String? = null
+    val categoryName: String? = null,
+    val reminderDate: Long? = null
 )

@@ -10,7 +10,8 @@ fun NoteEntity.toDomain(): Note = Note(
     createdAt = createdAt,
     updatedAt = updatedAt,
     taskId = taskId,
-    categoryName = categoryName
+    categoryName = categoryName,
+    reminderDate = reminderDate
 )
 
 fun Note.toEntity(): NoteEntity = NoteEntity(
@@ -20,5 +21,6 @@ fun Note.toEntity(): NoteEntity = NoteEntity(
     createdAt = createdAt,
     updatedAt = updatedAt,
     taskId = taskId,
-    categoryName = categoryName
+    categoryName = categoryName,
+    reminderDate = reminderDate
 )
