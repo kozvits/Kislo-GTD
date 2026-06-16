@@ -320,6 +320,12 @@ private fun chunkDays(days: List<Pair<Long, Int>>): List<List<Pair<Long, Int>>> 
             currentRow = mutableListOf()
         }
     }
-    if (currentRow.isNotEmpty()) rows.add(currentRow)
+    // Pad the last row to 7 cells so all rows have equal spacing
+    if (currentRow.isNotEmpty()) {
+        while (currentRow.size < 7) {
+            currentRow.add(0L to 0)
+        }
+        rows.add(currentRow)
+    }
     return rows
 }
