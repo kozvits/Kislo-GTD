@@ -27,7 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import com.kozvits.kislogtd.domain.model.Task
 import com.kozvits.kislogtd.domain.model.TaskStatus
 import com.kozvits.kislogtd.presentation.theme.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -137,6 +139,16 @@ fun TaskCard(
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
+                }
+                // Date display
+                if (task.startDate != null) {
+                    Spacer(Modifier.height(2.dp))
+                    val df = remember { SimpleDateFormat("d MMM", Locale("ru")) }
+                    Text(
+                        text = df.format(Date(task.startDate!!)),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
                 }
             }
 

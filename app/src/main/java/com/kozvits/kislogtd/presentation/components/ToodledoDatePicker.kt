@@ -34,12 +34,13 @@ fun ToodledoDatePickerDialog(
 ) {
     val calendar = remember { Calendar.getInstance() }
     var selectedMillis by remember { mutableStateOf(initialDateMillis) }
-    var displayedMonth by remember {
+    var displayedMonthMillis by remember {
         mutableStateOf(
-            if (initialDateMillis != null) {
-                Calendar.getInstance().apply { timeInMillis = initialDateMillis }
-            } else Calendar.getInstance()
+            initialDateMillis ?: Calendar.getInstance().timeInMillis
         )
+    }
+    val displayedMonth = remember(displayedMonthMillis) {
+        Calendar.getInstance().apply { timeInMillis = displayedMonthMillis }
     }
 
     val quickOptions = remember {
@@ -61,19 +62,9 @@ fun ToodledoDatePickerDialog(
                     set(Calendar.MILLISECOND, 0)
                 }.timeInMillis
             },
-            QuickDateOption("Эта неделя") {
+            QuickDateOption("Через неделю") {
                 Calendar.getInstance().apply {
-                    set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }.timeInMillis
-            },
-            QuickDateOption("След. неделя") {
-                Calendar.getInstance().apply {
-                    add(Calendar.WEEK_OF_YEAR, 1)
-                    set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+                    add(Calendar.DAY_OF_YEAR, 7)
                     set(Calendar.HOUR_OF_DAY, 0)
                     set(Calendar.MINUTE, 0)
                     set(Calendar.SECOND, 0)
@@ -83,19 +74,14 @@ fun ToodledoDatePickerDialog(
             QuickDateOption("Через месяц") {
                 Calendar.getInstance().apply {
                     add(Calendar.MONTH, 1)
-                    set(Calendar.DAY_OF_MONTH, 1)
                     set(Calendar.HOUR_OF_DAY, 0)
                     set(Calendar.MINUTE, 0)
                     set(Calendar.SECOND, 0)
                     set(Calendar.MILLISECOND, 0)
                 }.timeInMillis
-            },
-            QuickDateOption("Без даты") {
-                null
             }
         )
     }
-
     val dfMonth = remember { SimpleDateFormat("LLLL yyyy", Locale("ru")) }
     val dfDayNames = remember { SimpleDateFormat("EEE", Locale("ru")) }
 
@@ -107,28 +93,12 @@ fun ToodledoDatePickerDialog(
         },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // Quick presets row
+                // Quick presets — single row of 4
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    quickOptions.take(3).forEach { option ->
-                        QuickChip(
-                            label = option.label,
-                            selected = option.getMillis() == selectedMillis,
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                selectedMillis = option.getMillis()
-                            }
-                        )
-                    }
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    quickOptions.drop(3).forEach { option ->
+                    quickOptions.forEach { option ->
                         QuickChip(
                             label = option.label,
                             selected = option.getMillis() == selectedMillis,
@@ -149,17 +119,25 @@ fun ToodledoDatePickerDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = {
-                        displayedMonth.add(Calendar.MONTH, -1)
+                        val cal = Calendar.getInstance().apply {
+                            timeInMillis = displayedMonthMillis
+                            add(Calendar.MONTH, -1)
+                        }
+                        displayedMonthMillis = cal.timeInMillis
                     }) {
                         Icon(Icons.Filled.ChevronLeft, contentDescription = "Пред. месяц")
                     }
                     Text(
-                        text = dfMonth.format(displayedMonth.time).replaceFirstChar { it.uppercase() },
+                        text = dfMonth.format(Date(displayedMonthMillis)).replaceFirstChar { it.uppercase() },
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = {
-                        displayedMonth.add(Calendar.MONTH, 1)
+                        val cal = Calendar.getInstance().apply {
+                            timeInMillis = displayedMonthMillis
+                            add(Calendar.MONTH, 1)
+                        }
+                        displayedMonthMillis = cal.timeInMillis
                     }) {
                         Icon(Icons.Filled.ChevronRight, contentDescription = "След. месяц")
                     }
