@@ -92,6 +92,30 @@ fun SettingsScreen(
         )
     }
 
+    // Delete all data confirmation dialog
+    if (state.showDeleteAllConfirm) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissDeleteConfirm() },
+            title = { Text("Удалить все данные?") },
+            text = { Text("Это действие необратимо. Все задачи будут удалены навсегда.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.confirmDeleteAll() },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Удалить")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissDeleteConfirm() }) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
+
     // Token input dialog
     if (showTokenDialog) {
         var tokenInput by remember { mutableStateOf("") }

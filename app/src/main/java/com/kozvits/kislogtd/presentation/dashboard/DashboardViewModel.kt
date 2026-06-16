@@ -3,9 +3,9 @@ package com.kozvits.kislogtd.presentation.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kozvits.kislogtd.data.repository.TaskRepository
-import com.kozvits.kislogtd.domain.model.Task
 import com.kozvits.kislogtd.domain.model.TaskCategory
 import com.kozvits.kislogtd.domain.model.TaskStatus
+import com.kozvits.kislogtd.domain.usecase.CaptureTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -25,7 +25,8 @@ data class DashboardUiState(
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val captureTaskUseCase: CaptureTaskUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -69,11 +70,7 @@ class DashboardViewModel @Inject constructor(
 
     fun addQuickTask(title: String) {
         viewModelScope.launch {
-            val task = Task(
-                title = title,
-                category = TaskCategory.INBOX,
-                categoryName = "***IN"
-            )
+            val task = captureTaskUseCase(title = title)
             taskRepository.upsertTask(task)
         }
     }

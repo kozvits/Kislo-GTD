@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kozvits.kislogtd.data.repository.TaskRepository
 import com.kozvits.kislogtd.domain.model.*
+import com.kozvits.kislogtd.domain.usecase.CaptureTaskUseCase
+import com.kozvits.kislogtd.domain.usecase.MoveTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -11,7 +13,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MaybeViewModel @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val captureTaskUseCase: CaptureTaskUseCase,
+    private val moveTaskUseCase: MoveTaskUseCase
 ) : ViewModel() {
     val maybeTasks: StateFlow<List<Task>> = taskRepository
         .getTasksByCategory("MAYBE")
@@ -19,33 +23,27 @@ class MaybeViewModel @Inject constructor(
 
     fun addDream(title: String) {
         viewModelScope.launch {
-            taskRepository.upsertTask(
-                Task(
-                    title = title,
-                    category = TaskCategory.MAYBE,
-                    categoryName = ">>MAYBE"
-                )
+            val task = captureTaskUseCase(
+                title = title,
+                category = TaskCategory.MAYBE,
+                categoryName = ">>MAYBE"
             )
+            taskRepository.upsertTask(task)
         }
     }
 
     fun moveToDay(task: Task) {
         viewModelScope.launch {
-            taskRepository.upsertTask(
-                task.copy(
-                    category = TaskCategory.DAY,
-                    categoryName = "**DAY",
-                    startDate = System.currentTimeMillis()
-                )
-            )
+            val moved = moveTaskUseCase(task, "**DAY")
+            taskRepository.upsertTask(moved.copy(startDate = System.currentTimeMillis()))
         }
     }
 
     fun deleteTask(task: Task) {
-        viewModelScope.launch { taskRepository.deleteTask(task) }
+        viewModelScope.launch { taskRepository.softDeleteTask(task) }
     }
 
-    fun toggleTaskComplete(task: com.kozvits.kislogtd.domain.model.Task) {
+    fun toggleTaskComplete(task: Task) {
         viewModelScope.launch {
             taskRepository.toggleTaskComplete(task)
         }

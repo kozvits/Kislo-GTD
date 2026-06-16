@@ -61,11 +61,12 @@ interface TaskDao {
     @Query("DELETE FROM tasks")
     suspend fun deleteAll()
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(tasks: List<TaskEntity>)
+
     @androidx.room.Transaction
     suspend fun replaceAll(tasks: List<TaskEntity>) {
         deleteAll()
-        for (task in tasks) {
-            upsert(task)
-        }
+        insertAll(tasks)
     }
 }

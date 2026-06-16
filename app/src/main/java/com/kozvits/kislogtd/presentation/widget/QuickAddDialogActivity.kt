@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.room.Room
 import com.kozvits.kislogtd.data.db.AppDatabase
 import com.kozvits.kislogtd.data.db.entity.TaskEntity
 import com.kozvits.kislogtd.domain.model.TaskCategory
@@ -52,11 +51,7 @@ class QuickAddDialogActivity : ComponentActivity() {
     }
 
     private suspend fun saveTask(title: String) = withContext(Dispatchers.IO) {
-        val db = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            "kislo_gtd_database"
-        ).build()
+        val db = AppDatabase.getInstance(applicationContext)
         val now = System.currentTimeMillis()
         val entity = TaskEntity(
             id = UUID.randomUUID().toString(),
@@ -71,7 +66,6 @@ class QuickAddDialogActivity : ComponentActivity() {
             sortOrder = 0
         )
         db.taskDao().upsert(entity)
-        db.close()
     }
 
     override fun onDestroy() {

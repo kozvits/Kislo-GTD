@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kozvits.kislogtd.data.repository.TaskRepository
 import com.kozvits.kislogtd.domain.model.*
+import com.kozvits.kislogtd.domain.usecase.CompleteTaskUseCase
+import com.kozvits.kislogtd.domain.usecase.MoveTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -13,7 +15,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ControlViewModel @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val completeTaskUseCase: CompleteTaskUseCase,
+    private val moveTaskUseCase: MoveTaskUseCase
 ) : ViewModel() {
     val controlTasks: StateFlow<List<Task>> = taskRepository
         .getTasksByCategory("CONTROL")
@@ -21,24 +25,15 @@ class ControlViewModel @Inject constructor(
 
     fun markDone(task: Task) {
         viewModelScope.launch {
-            taskRepository.upsertTask(
-                task.copy(
-                    status = TaskStatus.COMPLETED,
-                    completedAt = System.currentTimeMillis()
-                )
-            )
+            val completed = completeTaskUseCase(task)
+            taskRepository.upsertTask(completed)
         }
     }
 
     fun moveToDay(task: Task) {
         viewModelScope.launch {
-            taskRepository.upsertTask(
-                task.copy(
-                    category = TaskCategory.DAY,
-                    categoryName = "**DAY",
-                    startDate = System.currentTimeMillis()
-                )
-            )
+            val moved = moveTaskUseCase(task, "**DAY")
+            taskRepository.upsertTask(moved.copy(startDate = System.currentTimeMillis()))
         }
     }
 
@@ -54,7 +49,7 @@ class ControlViewModel @Inject constructor(
         }
     }
 
-    fun toggleTaskComplete(task: com.kozvits.kislogtd.domain.model.Task) {
+    fun toggleTaskComplete(task: Task) {
         viewModelScope.launch {
             taskRepository.toggleTaskComplete(task)
         }

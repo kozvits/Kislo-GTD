@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kozvits.kislogtd.data.repository.TaskRepository
 import com.kozvits.kislogtd.domain.model.*
+import com.kozvits.kislogtd.domain.usecase.CaptureTaskUseCase
+import com.kozvits.kislogtd.domain.usecase.MoveTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -11,7 +13,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class InboxViewModel @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val captureTaskUseCase: CaptureTaskUseCase,
+    private val moveTaskUseCase: MoveTaskUseCase
 ) : ViewModel() {
 
     val inboxTasks: StateFlow<List<Task>> = taskRepository
@@ -20,14 +24,6 @@ class InboxViewModel @Inject constructor(
 
     fun processTask(task: Task, newTitle: String, targetCategory: String = "**DAY") {
         viewModelScope.launch {
-            val targetCategoryEnum = when (targetCategory) {
-                "**DAY" -> TaskCategory.DAY
-                "**LATER" -> TaskCategory.LATER
-                "*CONTROL" -> TaskCategory.CONTROL
-                ">>MAYBE" -> TaskCategory.MAYBE
-                else -> TaskCategory.DAY
-            }
-            // Determine subject prefix from title format "Subject\action"
             val subjectPrefix = if (newTitle.contains("\\")) {
                 newTitle.substringBefore("\\")
             } else {
@@ -39,10 +35,10 @@ class InboxViewModel @Inject constructor(
                 newTitle
             }
 
-            val processed = task.copy(
+            val moved = moveTaskUseCase(task, targetCategory)
+            val processed = moved.copy(
                 title = cleanTitle,
                 subjectPrefix = subjectPrefix,
-                category = targetCategoryEnum,
                 categoryName = targetCategory,
                 notes = if (task.notes.isBlank()) {
                     task.title
@@ -58,22 +54,18 @@ class InboxViewModel @Inject constructor(
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
-            taskRepository.deleteTask(task)
+            taskRepository.softDeleteTask(task)
         }
     }
 
     fun addToInbox(title: String) {
         viewModelScope.launch {
-            val task = Task(
-                title = title,
-                category = TaskCategory.INBOX,
-                categoryName = "***IN"
-            )
+            val task = captureTaskUseCase(title = title)
             taskRepository.upsertTask(task)
         }
     }
 
-    fun toggleTaskComplete(task: com.kozvits.kislogtd.domain.model.Task) {
+    fun toggleTaskComplete(task: Task) {
         viewModelScope.launch {
             taskRepository.toggleTaskComplete(task)
         }

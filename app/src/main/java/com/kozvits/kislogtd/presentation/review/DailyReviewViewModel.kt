@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kozvits.kislogtd.data.repository.TaskRepository
 import com.kozvits.kislogtd.domain.model.*
+import com.kozvits.kislogtd.domain.usecase.CompleteTaskUseCase
+import com.kozvits.kislogtd.domain.usecase.MoveTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -22,7 +24,9 @@ data class DailyReviewState(
 
 @HiltViewModel
 class DailyReviewViewModel @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val completeTaskUseCase: CompleteTaskUseCase,
+    private val moveTaskUseCase: MoveTaskUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(DailyReviewState())
     val state: StateFlow<DailyReviewState> = _state.asStateFlow()
@@ -51,9 +55,9 @@ class DailyReviewViewModel @Inject constructor(
 
     fun processInboxItem(item: Task, newTitle: String, targetCategory: String = "**DAY") {
         viewModelScope.launch {
-            val processed = item.copy(
+            val moved = moveTaskUseCase(item, targetCategory)
+            val processed = moved.copy(
                 title = newTitle,
-                category = if (targetCategory == "**DAY") TaskCategory.DAY else TaskCategory.LATER,
                 categoryName = targetCategory,
                 notes = if (item.notes.isBlank()) item.title else "${item.title}\n${item.notes}",
                 startDate = if (targetCategory == "**DAY") System.currentTimeMillis() else null
@@ -80,19 +84,22 @@ class DailyReviewViewModel @Inject constructor(
 
     fun moveTaskToLater(task: Task) {
         viewModelScope.launch {
-            taskRepository.upsertTask(task.copy(category = TaskCategory.LATER, categoryName = "**LATER", startDate = null))
+            val moved = moveTaskUseCase(task, "**LATER")
+            taskRepository.upsertTask(moved)
         }
     }
 
     fun moveTaskToControl(task: Task) {
         viewModelScope.launch {
-            taskRepository.upsertTask(task.copy(category = TaskCategory.CONTROL, categoryName = "*CONTROL"))
+            val moved = moveTaskUseCase(task, "*CONTROL")
+            taskRepository.upsertTask(moved)
         }
     }
 
     fun completeControlTask(task: Task) {
         viewModelScope.launch {
-            taskRepository.upsertTask(task.copy(status = TaskStatus.COMPLETED, completedAt = System.currentTimeMillis()))
+            val completed = completeTaskUseCase(task)
+            taskRepository.upsertTask(completed)
         }
     }
 

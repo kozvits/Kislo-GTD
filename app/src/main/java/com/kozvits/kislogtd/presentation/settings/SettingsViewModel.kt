@@ -46,7 +46,8 @@ data class SettingsUiState(
     val appVersion: String = "1.0.0",
     val retentionDays: Int = 90,
     val deletedRetentionDays: Int = 30,
-    val exportResult: String? = null
+    val exportResult: String? = null,
+    val showDeleteAllConfirm: Boolean = false
 )
 
 data class ExportData(
@@ -238,7 +239,28 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun showDeleteConfirm() {
-        addLog("Удаление данных — не реализовано")
+        _state.update { it.copy(showDeleteAllConfirm = true) }
+    }
+
+    fun dismissDeleteConfirm() {
+        _state.update { it.copy(showDeleteAllConfirm = false) }
+    }
+
+    fun confirmDeleteAll() {
+        viewModelScope.launch {
+            _state.update { it.copy(showDeleteAllConfirm = false, syncInProgress = true) }
+            try {
+                val tasks = taskRepository.getAllTasksOnce()
+                for (task in tasks) {
+                    taskRepository.deleteTask(task)
+                }
+                addLog("✓ Все данные удалены (${tasks.size} задач)")
+            } catch (e: Exception) {
+                addLog("✗ Ошибка удаления: ${e.message}")
+            } finally {
+                _state.update { it.copy(syncInProgress = false) }
+            }
+        }
     }
 
     fun dismissExportResult() {

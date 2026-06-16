@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kozvits.kislogtd.data.repository.TaskRepository
 import com.kozvits.kislogtd.domain.model.*
+import com.kozvits.kislogtd.domain.usecase.CaptureTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -18,13 +19,12 @@ data class ProjectSummary(
 
 @HiltViewModel
 class ProjectViewModel @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val captureTaskUseCase: CaptureTaskUseCase
 ) : ViewModel() {
-    // All tasks, used to derive project summaries
     val allTasks: StateFlow<List<Task>> = taskRepository.getAllTasks()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Project summaries: tasks whose categoryName is all-uppercase and not a known procedural category
     val projectSummaries: StateFlow<List<ProjectSummary>> = allTasks.map { tasks ->
         val projectNames = tasks.mapNotNull { it.categoryName }
             .filter { name ->
@@ -56,20 +56,17 @@ class ProjectViewModel @Inject constructor(
 
     fun createProject(name: String) {
         viewModelScope.launch {
-            taskRepository.upsertTask(
-                Task(
-                    title = "Проект $name",
-                    category = TaskCategory.PROJECT,
-                    categoryName = name.uppercase(),
-                    isStem = false
-                )
+            val task = captureTaskUseCase(
+                title = "Проект $name",
+                category = TaskCategory.PROJECT,
+                categoryName = name.uppercase()
             )
+            taskRepository.upsertTask(task)
         }
     }
 
     fun renameProject(oldName: String, newName: String) {
         viewModelScope.launch {
-            // Update all tasks that reference this project
             val all = taskRepository.getAllTasks().first()
             all.filter { it.categoryName == oldName }.forEach { t ->
                 taskRepository.upsertTask(t.copy(categoryName = newName))
@@ -82,12 +79,14 @@ class ProjectViewModel @Inject constructor(
 
     fun addTaskToProject(projectName: String, title: String, subjectPrefix: String? = "Я") {
         viewModelScope.launch {
+            val task = captureTaskUseCase(
+                title = title,
+                category = TaskCategory.DAY,
+                categoryName = "**DAY"
+            )
             taskRepository.upsertTask(
-                Task(
-                    title = title,
+                task.copy(
                     subjectPrefix = subjectPrefix,
-                    category = TaskCategory.DAY,
-                    categoryName = "**DAY",
                     projectId = projectName,
                     startDate = System.currentTimeMillis()
                 )

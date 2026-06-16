@@ -30,11 +30,12 @@ interface WeeklyStatsDao {
     @Query("DELETE FROM weekly_stats")
     suspend fun deleteAll()
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(stats: List<WeeklyStatsEntity>)
+
     @androidx.room.Transaction
     suspend fun replaceAll(stats: List<WeeklyStatsEntity>) {
         deleteAll()
-        for (stat in stats) {
-            upsert(stat)
-        }
+        insertAll(stats)
     }
 }

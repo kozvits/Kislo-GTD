@@ -1,20 +1,10 @@
 package com.kozvits.kislogtd.presentation.widget
 
 import android.content.Context
-import android.graphics.Color
-import android.widget.RemoteViews
-import android.widget.RemoteViewsService
 import androidx.glance.GlanceId
-import androidx.glance.GlanceModifier
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.provideContent
-import androidx.glance.layout.Alignment
-import androidx.glance.layout.Box
-import androidx.glance.layout.Column
-import androidx.glance.layout.fillMaxSize
-import androidx.glance.text.Text
-import androidx.room.Room
 import com.kozvits.kislogtd.data.db.AppDatabase
 import com.kozvits.kislogtd.domain.model.TaskStatus
 import kotlinx.coroutines.Dispatchers
@@ -31,23 +21,18 @@ class KisloGtdWidget : GlanceAppWidget() {
             .replaceFirstChar { it.uppercase() }
 
         provideContent {
-            Box(
-                modifier = GlanceModifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+            androidx.glance.layout.Box(
+                modifier = androidx.glance.GlanceModifier.fillMaxSize(),
+                contentAlignment = androidx.glance.layout.Alignment.Center
             ) {
-                Text(text = "$today · $size задач из **DAY")
+                androidx.glance.text.Text(text = "$today · $size задач из **DAY")
             }
         }
     }
 
     private suspend fun loadDayTasks(context: Context): List<TaskWidgetItem> {
-        val db = Room.databaseBuilder(
-            context.applicationContext,
-            AppDatabase::class.java,
-            "kislo_gtd_database"
-        ).build()
+        val db = AppDatabase.getInstance(context)
         val entities = db.taskDao().getByCategorySync("DAY")
-        db.close()
         return entities
             .filter { it.status == TaskStatus.ACTIVE.name }
             .map { TaskWidgetItem(it.id, it.title, it.subjectPrefix, it.isStem, it.isUrgent) }

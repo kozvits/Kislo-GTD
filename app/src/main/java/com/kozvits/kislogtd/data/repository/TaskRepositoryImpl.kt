@@ -19,6 +19,7 @@ interface TaskRepository {
     fun searchTasks(query: String): Flow<List<Task>>
     suspend fun upsertTask(task: Task)
     suspend fun deleteTask(task: Task)
+    suspend fun softDeleteTask(task: Task)
     suspend fun getCompletedBetween(start: Long, end: Long): List<Task>
     fun getTasksByProject(projectId: String): Flow<List<Task>>
     fun getTasksByStatus(status: String): Flow<List<Task>>
@@ -62,6 +63,14 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun deleteTask(task: Task) {
         taskDao.delete(task.toEntity())
+    }
+
+    override suspend fun softDeleteTask(task: Task) {
+        taskDao.updateStatus(
+            id = task.id,
+            status = TaskStatus.DELETED.name,
+            completedAt = System.currentTimeMillis()
+        )
     }
 
     override suspend fun getCompletedBetween(start: Long, end: Long): List<Task> {
