@@ -2,9 +2,14 @@ package com.kozvits.kislogtd.presentation.widget
 
 import android.content.Context
 import androidx.glance.GlanceId
+import androidx.glance.GlanceModifier
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.provideContent
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.text.Text
 import com.kozvits.kislogtd.data.db.AppDatabase
 import com.kozvits.kislogtd.domain.model.TaskStatus
 import kotlinx.coroutines.Dispatchers
@@ -21,11 +26,11 @@ class KisloGtdWidget : GlanceAppWidget() {
             .replaceFirstChar { it.uppercase() }
 
         provideContent {
-            androidx.glance.layout.Box(
-                modifier = androidx.glance.GlanceModifier.fillMaxSize(),
-                contentAlignment = androidx.glance.layout.Alignment.Center
+            Box(
+                modifier = GlanceModifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                androidx.glance.text.Text(text = "$today · $size задач из **DAY")
+                Text(text = "$today · $size задач из **DAY")
             }
         }
     }
@@ -46,7 +51,6 @@ data class TaskWidgetItem(
     val isStem: Boolean,
     val isUrgent: Boolean
 )
-
 class KisloGtdWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = KisloGtdWidget()
 }

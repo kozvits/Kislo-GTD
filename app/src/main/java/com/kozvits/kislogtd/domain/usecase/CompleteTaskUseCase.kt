@@ -2,12 +2,13 @@ package com.kozvits.kislogtd.domain.usecase
 
 import com.kozvits.kislogtd.domain.model.Task
 import com.kozvits.kislogtd.domain.model.TaskStatus
+import javax.inject.Inject
 
 interface CompleteTaskUseCase {
     operator fun invoke(task: Task): Task
 }
 
-class CompleteTaskUseCaseImpl : CompleteTaskUseCase {
+class CompleteTaskUseCaseImpl @Inject constructor() : CompleteTaskUseCase {
 
     override operator fun invoke(task: Task): Task {
         val now = System.currentTimeMillis()

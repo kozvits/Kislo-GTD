@@ -114,7 +114,7 @@ private fun SearchResultItem(task: Task, onClick: () -> Unit) {
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CategoryIcon(category = task.category.name)
+            CategoryIcon(categoryName = task.categoryName ?: task.category.name)
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(

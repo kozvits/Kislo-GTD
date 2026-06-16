@@ -2,12 +2,13 @@ package com.kozvits.kislogtd.domain.usecase
 
 import com.kozvits.kislogtd.domain.model.Task
 import com.kozvits.kislogtd.domain.model.TaskCategory
+import javax.inject.Inject
 
 interface MoveTaskUseCase {
     operator fun invoke(task: Task, targetCategory: String): Task
 }
 
-class MoveTaskUseCaseImpl : MoveTaskUseCase {
+class MoveTaskUseCaseImpl @Inject constructor() : MoveTaskUseCase {
 
     override operator fun invoke(task: Task, targetCategory: String): Task {
         val newCategory = when (targetCategory.uppercase().trim()) {
