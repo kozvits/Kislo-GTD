@@ -45,6 +45,7 @@ data class SettingsUiState(
     val syncInProgress: Boolean = false,
     val appVersion: String = "1.0.0",
     val retentionDays: Int = 90,
+    val deletedRetentionDays: Int = 30,
     val exportResult: String? = null
 )
 
@@ -102,6 +103,7 @@ class SettingsViewModel @Inject constructor(
                         autoSync = settings.autoSync,
                         syncIntervalHours = settings.syncIntervalHours,
                         retentionDays = settings.retentionDays,
+                        deletedRetentionDays = settings.deletedRetentionDays,
                         lastSyncTime = if (settings.lastSyncTimestamp > 0L) {
                             SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("ru"))
                                 .format(Date(settings.lastSyncTimestamp))
@@ -222,7 +224,16 @@ class SettingsViewModel @Inject constructor(
             val clamped = days.coerceIn(1, 730)
             syncStateRepository.setRetentionDays(clamped)
             _state.update { it.copy(retentionDays = clamped) }
-            addLog("Время хранения: $clamped дн.")
+            addLog("Время хранения выполненных: $clamped дн.")
+        }
+    }
+
+    fun setDeletedRetentionDays(days: Int) {
+        viewModelScope.launch {
+            val clamped = days.coerceIn(1, 365)
+            syncStateRepository.setDeletedRetentionDays(clamped)
+            _state.update { it.copy(deletedRetentionDays = clamped) }
+            addLog("Время хранения удалённых: $clamped дн.")
         }
     }
 

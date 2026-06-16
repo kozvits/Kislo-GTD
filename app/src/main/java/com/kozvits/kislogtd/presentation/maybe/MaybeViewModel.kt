@@ -44,4 +44,10 @@ class MaybeViewModel @Inject constructor(
     fun deleteTask(task: Task) {
         viewModelScope.launch { taskRepository.deleteTask(task) }
     }
+
+    fun toggleTaskComplete(task: com.kozvits.kislogtd.domain.model.Task) {
+        viewModelScope.launch {
+            taskRepository.toggleTaskComplete(task)
+        }
+    }
 }

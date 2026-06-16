@@ -129,4 +129,10 @@ class DayViewModel @Inject constructor(
             taskRepository.upsertTask(task)
         }
     }
+
+    fun toggleTaskComplete(task: com.kozvits.kislogtd.domain.model.Task) {
+        viewModelScope.launch {
+            taskRepository.toggleTaskComplete(task)
+        }
+    }
 }

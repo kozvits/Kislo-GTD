@@ -208,6 +208,7 @@ fun DayScreen(
                                 onLongClick = {
                                     navController.navigate("task/${task.id}")
                                 },
+                                onCheckboxToggle = { viewModel.toggleComplete(task) },
                                 onSwipeLeft = { viewModel.moveTask(task, "**LATER") },
                                 onSwipeRight = { viewModel.toggleComplete(task) }
                             )

@@ -12,13 +12,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -42,7 +46,8 @@ fun TaskCard(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     onSwipeLeft: (() -> Unit)? = null,
-    onSwipeRight: (() -> Unit)? = null
+    onSwipeRight: (() -> Unit)? = null,
+    onCheckboxToggle: (() -> Unit)? = null
 ) {
     val isCompleted = task.status == TaskStatus.COMPLETED
     val surfaceColor by animateColorAsState(
@@ -84,7 +89,7 @@ fun TaskCard(
             // Checkbox
             Checkbox(
                 checked = isCompleted,
-                onCheckedChange = { onClick() },
+                onCheckedChange = { onCheckboxToggle?.invoke() ?: onClick() },
                 colors = CheckboxDefaults.colors(
                     checkedColor = if (task.isStem) CategoryStem else CategoryDay,
                     uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -94,17 +99,30 @@ fun TaskCard(
 
             // Content
             Column(modifier = Modifier.weight(1f)) {
-                // Title
-                Text(
-                    text = task.displayTitle,
-                    style = if (task.isStem) MaterialTheme.typography.bodySmall
-                    else MaterialTheme.typography.bodyLarge,
-                    textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                    color = if (isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    else MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Title row with stem icon
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = task.displayTitle,
+                        style = if (task.isStem) MaterialTheme.typography.bodySmall
+                        else MaterialTheme.typography.bodyLarge,
+                        textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                        color = if (isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    // Stem repeat icon
+                    if (task.isStem) {
+                        Spacer(Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Filled.Repeat,
+                            contentDescription = "Стволовая (повторяющаяся)",
+                            modifier = Modifier.size(16.dp),
+                            tint = CategoryStem.copy(alpha = 0.7f)
+                        )
+                    }
+                }
                 // Subject prefix chip
                 if (task.subjectPrefix != null && task.subjectPrefix != "Я") {
                     Spacer(Modifier.height(2.dp))

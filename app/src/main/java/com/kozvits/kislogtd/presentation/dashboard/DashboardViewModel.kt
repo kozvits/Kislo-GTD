@@ -17,7 +17,9 @@ data class DashboardUiState(
     val controlCount: Int = 0,
     val laterCount: Int = 0,
     val maybeCount: Int = 0,
+    val projectCount: Int = 0,
     val todayCompleted: Int = 0,
+    val deletedCount: Int = 0,
     val isLoading: Boolean = true
 )
 
@@ -32,34 +34,36 @@ class DashboardViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             taskRepository.getAllTasks().map { tasks ->
-            val active = tasks.filter { it.status == TaskStatus.ACTIVE }
-            val now = java.util.Calendar.getInstance().apply {
-                set(java.util.Calendar.HOUR_OF_DAY, 0)
-                set(java.util.Calendar.MINUTE, 0)
-                set(java.util.Calendar.SECOND, 0)
-                set(java.util.Calendar.MILLISECOND, 0)
-            }.timeInMillis
-            val todayEnd = now + 86400000L
+                val active = tasks.filter { it.status == TaskStatus.ACTIVE }
+                val now = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    set(java.util.Calendar.MINUTE, 0)
+                    set(java.util.Calendar.SECOND, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                val todayEnd = now + 86400000L
 
-            DashboardUiState(
-                inboxCount = active.count { it.category == TaskCategory.INBOX },
-                dayCount = active.count { it.category == TaskCategory.DAY },
-                controlCount = active.count { it.category == TaskCategory.CONTROL },
-                laterCount = active.count { it.category == TaskCategory.LATER },
-                maybeCount = active.count { it.category == TaskCategory.MAYBE },
-                todayCompleted = tasks.count {
-                    it.status == TaskStatus.COMPLETED
-                        && it.completedAt != null
-                        && it.completedAt!! >= now
-                        && it.completedAt!! < todayEnd
-                },
-                isLoading = false
-            )
-        }.catch { e ->
-            emit(DashboardUiState(isLoading = false))
-        }.collect { state ->
-            _uiState.value = state
-        }
+                DashboardUiState(
+                    inboxCount = active.count { it.category == TaskCategory.INBOX },
+                    dayCount = active.count { it.category == TaskCategory.DAY },
+                    controlCount = active.count { it.category == TaskCategory.CONTROL },
+                    laterCount = active.count { it.category == TaskCategory.LATER },
+                    maybeCount = active.count { it.category == TaskCategory.MAYBE },
+                    projectCount = active.count { it.category == TaskCategory.PROJECT },
+                    todayCompleted = tasks.count {
+                        it.status == TaskStatus.COMPLETED
+                            && it.completedAt != null
+                            && it.completedAt!! >= now
+                            && it.completedAt!! < todayEnd
+                    },
+                    deletedCount = tasks.count { it.status == TaskStatus.DELETED },
+                    isLoading = false
+                )
+            }.catch { e ->
+                emit(DashboardUiState(isLoading = false))
+            }.collect { state ->
+                _uiState.value = state
+            }
         }
     }
 

@@ -4,8 +4,11 @@ import com.kozvits.kislogtd.data.db.toDomain
 import com.kozvits.kislogtd.data.db.toEntity
 import com.kozvits.kislogtd.data.db.dao.TaskDao
 import com.kozvits.kislogtd.domain.model.Task
+import com.kozvits.kislogtd.domain.model.TaskCategory
+import com.kozvits.kislogtd.domain.model.TaskStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,6 +23,8 @@ interface TaskRepository {
     fun getTasksByProject(projectId: String): Flow<List<Task>>
     fun getTasksByStatus(status: String): Flow<List<Task>>
     suspend fun getAllTasksOnce(): List<Task>
+    suspend fun getCountByStatus(status: String): Int
+    suspend fun toggleTaskComplete(task: Task)
 }
 
 @Singleton
@@ -77,5 +82,32 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun getAllTasksOnce(): List<Task> {
         return taskDao.getAllTasksList().map { it.toDomain() }
+    }
+
+    override suspend fun getCountByStatus(status: String): Int {
+        return taskDao.getCountByStatus(status)
+    }
+
+    override suspend fun toggleTaskComplete(task: Task) {
+        if (task.isStem) {
+            // Стволовая — дублировать в ***IN
+            val copy = task.copy(
+                id = UUID.randomUUID().toString(),
+                status = TaskStatus.ACTIVE,
+                category = TaskCategory.INBOX,
+                categoryName = "***IN",
+                completedAt = null,
+                createdAt = System.currentTimeMillis(),
+                startDate = null
+            )
+            taskDao.upsert(copy.toEntity())
+        } else {
+            // Обычная — завершить
+            taskDao.updateStatus(
+                id = task.id,
+                status = TaskStatus.COMPLETED.name,
+                completedAt = System.currentTimeMillis()
+            )
+        }
     }
 }

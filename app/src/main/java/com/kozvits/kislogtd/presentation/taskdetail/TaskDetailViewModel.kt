@@ -60,18 +60,17 @@ class TaskDetailViewModel @Inject constructor(
     fun toggleComplete() {
         viewModelScope.launch {
             val current = task.value ?: return@launch
-            if (current.status == TaskStatus.ACTIVE) {
-                taskRepository.upsertTask(current.copy(status = TaskStatus.COMPLETED, completedAt = System.currentTimeMillis()))
-            } else {
-                taskRepository.upsertTask(current.copy(status = TaskStatus.ACTIVE, completedAt = null))
-            }
+            taskRepository.toggleTaskComplete(current)
         }
     }
 
     fun deleteTask() {
         viewModelScope.launch {
             val current = task.value ?: return@launch
-            taskRepository.deleteTask(current)
+            taskRepository.upsertTask(current.copy(
+                status = TaskStatus.DELETED,
+                completedAt = System.currentTimeMillis()
+            ))
         }
     }
 

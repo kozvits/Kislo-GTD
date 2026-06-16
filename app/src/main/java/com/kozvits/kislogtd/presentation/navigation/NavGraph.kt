@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Workspaces
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,6 +61,7 @@ import com.kozvits.kislogtd.presentation.project.ProjectDetailScreen
 import com.kozvits.kislogtd.presentation.review.DailyReviewScreen
 import com.kozvits.kislogtd.presentation.review.WeeklyReviewScreen
 import com.kozvits.kislogtd.presentation.completed.CompletedTasksScreen
+import com.kozvits.kislogtd.presentation.deleted.DeletedTasksScreen
 import com.kozvits.kislogtd.presentation.taskdetail.TaskDetailScreen
 import com.kozvits.kislogtd.presentation.settings.SettingsScreen
 import kotlinx.coroutines.launch
@@ -77,6 +79,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object DailyReview : Screen("daily_review", "Утренний регламент", Icons.Filled.Today)
     data object WeeklyReview : Screen("weekly_review", "Недельный обзор", Icons.Filled.Assessment)
     data object CompletedTasks : Screen("completed_tasks", "Выполненные задачи", Icons.Filled.CheckCircle)
+    data object DeletedTasks : Screen("deleted_tasks", "Удаленные задачи", Icons.Filled.Delete)
     data object Settings : Screen("settings", "Настройки", Icons.Filled.Settings)
 }
 
@@ -93,6 +96,8 @@ val drawerNavItems = listOf(
     Screen.ProjectList,
     Screen.DailyReview,
     Screen.WeeklyReview,
+    Screen.CompletedTasks,
+    Screen.DeletedTasks,
     Screen.Settings
 )
 
@@ -276,6 +281,9 @@ fun AppNavHost() {
                 }
                 composable(Screen.CompletedTasks.route) {
                     CompletedTasksScreen(navController)
+                }
+                composable(Screen.DeletedTasks.route) {
+                    DeletedTasksScreen(navController = navController)
                 }
                 composable(Screen.Settings.route) {
                     SettingsScreen(navController)

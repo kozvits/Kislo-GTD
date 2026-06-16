@@ -436,6 +436,43 @@ fun SettingsScreen(
                 }
             }
 
+            // Retention for deleted tasks
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Время хранения удалённых", style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    "Автоматически очищать корзину через ${state.deletedRetentionDays} дн.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Slider(
+                            value = state.deletedRetentionDays.toFloat(),
+                            onValueChange = { viewModel.setDeletedRetentionDays(it.toInt()) },
+                            valueRange = 1f..365f, steps = 363,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("1 день", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("365 дн.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
             // JSON Export — saves directly to Downloads/
             item {
                 OutlinedButton(

@@ -32,4 +32,10 @@ class LaterViewModel @Inject constructor(
     fun deleteTask(task: Task) {
         viewModelScope.launch { taskRepository.deleteTask(task) }
     }
+
+    fun toggleTaskComplete(task: Task) {
+        viewModelScope.launch {
+            taskRepository.toggleTaskComplete(task)
+        }
+    }
 }

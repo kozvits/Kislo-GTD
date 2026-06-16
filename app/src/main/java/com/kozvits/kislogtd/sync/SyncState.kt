@@ -27,7 +27,8 @@ data class SyncSettings(
     val lastSyncStatus: String = "never",
     val isDarkTheme: Boolean = false,
     val themeUserSet: Boolean = false,
-    val retentionDays: Int = 90
+    val retentionDays: Int = 90,
+    val deletedRetentionDays: Int = 30
 )
 
 @Singleton
@@ -45,6 +46,7 @@ class SyncStateRepository @Inject constructor(
         private val KEY_IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
         private val KEY_THEME_USER_SET = booleanPreferencesKey("theme_user_set")
         private val KEY_RETENTION_DAYS = intPreferencesKey("retention_days")
+        private val KEY_DELETED_RETENTION_DAYS = intPreferencesKey("deleted_retention_days")
     }
 
     val settings: Flow<SyncSettings> = context.syncStore.data.map { prefs ->
@@ -58,7 +60,8 @@ class SyncStateRepository @Inject constructor(
             lastSyncStatus = prefs[KEY_LAST_STATUS] ?: "never",
             isDarkTheme = prefs[KEY_IS_DARK_THEME] ?: false,
             themeUserSet = prefs[KEY_THEME_USER_SET] ?: false,
-            retentionDays = prefs[KEY_RETENTION_DAYS] ?: 90
+            retentionDays = prefs[KEY_RETENTION_DAYS] ?: 90,
+            deletedRetentionDays = prefs[KEY_DELETED_RETENTION_DAYS] ?: 30
         )
     }
 
@@ -102,6 +105,12 @@ class SyncStateRepository @Inject constructor(
     suspend fun setRetentionDays(days: Int) {
         context.syncStore.edit { prefs ->
             prefs[KEY_RETENTION_DAYS] = days.coerceIn(1, 730)
+        }
+    }
+
+    suspend fun setDeletedRetentionDays(days: Int) {
+        context.syncStore.edit { prefs ->
+            prefs[KEY_DELETED_RETENTION_DAYS] = days.coerceIn(1, 365)
         }
     }
 }

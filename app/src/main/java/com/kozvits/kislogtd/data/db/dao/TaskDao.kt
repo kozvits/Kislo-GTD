@@ -44,6 +44,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE status = :status ORDER BY completed_at DESC, created_at DESC")
     fun getByStatus(status: String): Flow<List<TaskEntity>>
 
+    @Query("SELECT COUNT(*) FROM tasks WHERE status = :status")
+    suspend fun getCountByStatus(status: String): Int
+
     // ── Sync support ─────────────────────────────────────────────────
 
     @Query("SELECT * FROM tasks")

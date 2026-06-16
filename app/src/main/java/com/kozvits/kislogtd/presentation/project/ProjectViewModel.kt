@@ -94,4 +94,10 @@ class ProjectViewModel @Inject constructor(
             )
         }
     }
+
+    fun toggleTaskComplete(task: Task) {
+        viewModelScope.launch {
+            taskRepository.toggleTaskComplete(task)
+        }
+    }
 }

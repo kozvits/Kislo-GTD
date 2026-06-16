@@ -95,7 +95,8 @@ fun ProjectDetailScreen(
                             },
                             onLongClick = {
                                 navController.navigate("task/${task.id}")
-                            }
+                            },
+                            onCheckboxToggle = { viewModel.toggleTaskComplete(task) }
                         )
                     }
                 }

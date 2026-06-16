@@ -191,7 +191,7 @@ fun DashboardScreen(
                 CategoryTile(
                     title = "Проекты",
                     subtitle = "Текущие и отложенные проекты",
-                    count = 0,
+                    count = uiState.projectCount,
                     icon = Icons.Filled.Workspaces,
                     color = CategoryProject,
                     onClick = { navController.navigate(Screen.ProjectList.route) }
@@ -221,10 +221,20 @@ fun DashboardScreen(
                 CategoryTile(
                     title = "Выполненные задачи",
                     subtitle = "Архив завершённых дел",
-                    count = 0,
+                    count = uiState.todayCompleted,
                     icon = Icons.Filled.CheckCircle,
                     color = CategoryDay,
                     onClick = { navController.navigate(Screen.CompletedTasks.route) }
+                )
+            }
+            item {
+                CategoryTile(
+                    title = "Удаленные задачи",
+                    subtitle = "Корзина",
+                    count = uiState.deletedCount,
+                    icon = Icons.Filled.DeleteSweep,
+                    color = MaterialTheme.colorScheme.error,
+                    onClick = { navController.navigate(Screen.DeletedTasks.route) }
                 )
             }
         }
