@@ -17,4 +17,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindWeeklyStatsRepository(impl: WeeklyStatsRepositoryImpl): WeeklyStatsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindNoteRepository(impl: NoteRepositoryImpl): NoteRepository
 }

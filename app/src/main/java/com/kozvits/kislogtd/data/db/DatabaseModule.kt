@@ -2,6 +2,7 @@ package com.kozvits.kislogtd.data.db
 
 import android.content.Context
 import androidx.room.Room
+import com.kozvits.kislogtd.data.db.dao.NoteDao
 import com.kozvits.kislogtd.data.db.dao.TaskDao
 import com.kozvits.kislogtd.data.db.dao.WeeklyStatsDao
 import dagger.Module
@@ -33,5 +34,10 @@ object DatabaseModule {
     @Provides
     fun provideWeeklyStatsDao(db: AppDatabase): WeeklyStatsDao {
         return db.weeklyStatsDao()
+    }
+
+    @Provides
+    fun provideNoteDao(db: AppDatabase): NoteDao {
+        return db.noteDao()
     }
 }

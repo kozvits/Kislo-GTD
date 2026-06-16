@@ -5,20 +5,23 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.kozvits.kislogtd.data.db.converter.Converters
+import com.kozvits.kislogtd.data.db.dao.NoteDao
 import com.kozvits.kislogtd.data.db.dao.TaskDao
 import com.kozvits.kislogtd.data.db.dao.WeeklyStatsDao
+import com.kozvits.kislogtd.data.db.entity.NoteEntity
 import com.kozvits.kislogtd.data.db.entity.TaskEntity
 import com.kozvits.kislogtd.data.db.entity.WeeklyStatsEntity
 
 @Database(
-    entities = [TaskEntity::class, WeeklyStatsEntity::class],
-    version = 1,
+    entities = [TaskEntity::class, WeeklyStatsEntity::class, NoteEntity::class],
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun weeklyStatsDao(): WeeklyStatsDao
+    abstract fun noteDao(): NoteDao
 
     companion object {
         @Volatile
@@ -30,7 +33,8 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "kislo_gtd_database"
-                ).build().also { INSTANCE = it }
+                ).fallbackToDestructiveMigration()
+                .build().also { INSTANCE = it }
             }
         }
     }

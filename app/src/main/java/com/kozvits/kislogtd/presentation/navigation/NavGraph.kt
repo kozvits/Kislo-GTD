@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Workspaces
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Divider
@@ -56,6 +57,8 @@ import com.kozvits.kislogtd.presentation.day.DayScreen
 import com.kozvits.kislogtd.presentation.inbox.InboxScreen
 import com.kozvits.kislogtd.presentation.later.LaterScreen
 import com.kozvits.kislogtd.presentation.maybe.MaybeScreen
+import com.kozvits.kislogtd.presentation.note.NoteDetailScreen
+import com.kozvits.kislogtd.presentation.note.NoteListScreen
 import com.kozvits.kislogtd.presentation.project.ProjectScreen
 import com.kozvits.kislogtd.presentation.project.ProjectDetailScreen
 import com.kozvits.kislogtd.presentation.review.DailyReviewScreen
@@ -81,6 +84,8 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object CompletedTasks : Screen("completed_tasks", "Выполненные задачи", Icons.Filled.CheckCircle)
     data object DeletedTasks : Screen("deleted_tasks", "Удаленные задачи", Icons.Filled.Delete)
     data object Settings : Screen("settings", "Настройки", Icons.Filled.Settings)
+    data object Notes : Screen("notes", "Заметки", Icons.Filled.Description)
+    data object NoteDetail : Screen("note/{noteId}", "Заметка", Icons.Filled.Description)
 }
 
 val bottomNavItems = listOf(
@@ -93,6 +98,7 @@ val bottomNavItems = listOf(
 val drawerNavItems = listOf(
     Screen.Later,
     Screen.Maybe,
+    Screen.Notes,
     Screen.ProjectList,
     Screen.DailyReview,
     Screen.WeeklyReview,
@@ -287,6 +293,28 @@ fun AppNavHost() {
                 }
                 composable(Screen.Settings.route) {
                     SettingsScreen(navController)
+                }
+                composable(Screen.Notes.route) {
+                    NoteListScreen(
+                        onNoteClick = { noteId ->
+                            navController.navigate("note/$noteId")
+                        },
+                        onNewNote = {
+                            navController.navigate("note/new")
+                        }
+                    )
+                }
+                composable(
+                    route = "note/{noteId}",
+                    arguments = listOf(navArgument("noteId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val noteId = backStackEntry.arguments?.getString("noteId")
+                    val isNew = noteId == "new"
+                    NoteDetailScreen(
+                        noteId = if (isNew) null else noteId,
+                        isNew = isNew,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
                 }
             }
         }
