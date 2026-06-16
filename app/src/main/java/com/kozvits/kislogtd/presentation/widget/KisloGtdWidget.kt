@@ -1,55 +1,67 @@
 package com.kozvits.kislogtd.presentation.widget
 
-import android.app.PendingIntent
-import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.Context
-import android.content.Intent
+import android.graphics.Color
 import android.widget.RemoteViews
-import com.kozvits.kislogtd.MainActivity
-import com.kozvits.kislogtd.R
+import android.widget.RemoteViewsService
+import androidx.glance.GlanceId
+import androidx.glance.GlanceModifier
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.provideContent
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
+import androidx.glance.layout.Column
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.text.Text
+import androidx.room.Room
+import com.kozvits.kislogtd.data.db.AppDatabase
+import com.kozvits.kislogtd.domain.model.TaskStatus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-class KisloGtdWidget : AppWidgetProvider() {
-    override fun onUpdate(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
-    ) {
-        for (appWidgetId in appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, appWidgetId)
+class KisloGtdWidget : GlanceAppWidget() {
+
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val size = withContext(Dispatchers.IO) { loadDayTasks(context).size }
+        val today = SimpleDateFormat("EEEE, dd.MM", Locale("ru")).format(Date())
+            .replaceFirstChar { it.uppercase() }
+
+        provideContent {
+            Box(
+                modifier = GlanceModifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "$today · $size задач из **DAY")
+            }
         }
     }
 
-    companion object {
-        internal fun updateAppWidget(
-            context: Context,
-            appWidgetManager: AppWidgetManager,
-            appWidgetId: Int
-        ) {
-            val views = RemoteViews(context.packageName, R.layout.widget_kislogtd)
-
-            // Open app on click
-            val intent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
-            val pendingIntent = PendingIntent.getActivity(
-                context, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_container, pendingIntent)
-
-            // Open quick capture via Inbox
-            val captureIntent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra("open_capture", true)
-            }
-            val capturePendingIntent = PendingIntent.getActivity(
-                context, 1, captureIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_fab, capturePendingIntent)
-
-            appWidgetManager.updateAppWidget(appWidgetId, views)
-        }
+    private suspend fun loadDayTasks(context: Context): List<TaskWidgetItem> {
+        val db = Room.databaseBuilder(
+            context.applicationContext,
+            AppDatabase::class.java,
+            "kislo_gtd_database"
+        ).build()
+        val entities = db.taskDao().getByCategorySync("DAY")
+        db.close()
+        return entities
+            .filter { it.status == TaskStatus.ACTIVE.name }
+            .map { TaskWidgetItem(it.id, it.title, it.subjectPrefix, it.isStem, it.isUrgent) }
     }
+}
+
+data class TaskWidgetItem(
+    val id: String,
+    val title: String,
+    val subjectPrefix: String?,
+    val isStem: Boolean,
+    val isUrgent: Boolean
+)
+
+class KisloGtdWidgetReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = KisloGtdWidget()
 }

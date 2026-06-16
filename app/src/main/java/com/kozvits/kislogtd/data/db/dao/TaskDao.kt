@@ -47,6 +47,12 @@ interface TaskDao {
     @Query("SELECT COUNT(*) FROM tasks WHERE status = :status")
     suspend fun getCountByStatus(status: String): Int
 
+    @Query("SELECT * FROM tasks WHERE category = :categoryName")
+    suspend fun getByCategorySync(categoryName: String): List<TaskEntity>
+
+    @Query("SELECT * FROM tasks WHERE start_date >= :dayStart AND start_date < :dayEnd AND status = 'ACTIVE'")
+    suspend fun getScheduledForDate(dayStart: Long, dayEnd: Long): List<TaskEntity>
+
     // ── Sync support ─────────────────────────────────────────────────
 
     @Query("SELECT * FROM tasks")

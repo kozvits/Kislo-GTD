@@ -69,7 +69,7 @@
     <string name="about">О приложении</string>
 
     <!-- Widget -->
-    <string name="widget_description">Быстрый доступ к Успевателю</string>
+    <string name="widget_description">Задачи на сегодня</string>
     <string name="version">Версия %s</string>
 
     <!-- Task hints -->

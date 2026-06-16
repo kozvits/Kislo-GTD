@@ -42,7 +42,7 @@
 
         <!-- Widget -->
         <receiver
-            android:name=".presentation.widget.KisloGtdWidget"
+            android:name=".presentation.widget.KisloGtdWidgetReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -51,6 +51,12 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/kislo_gtd_widget_info" />
         </receiver>
+
+        <!-- Quick Add via widget -->
+        <activity
+            android:name=".presentation.widget.QuickAddDialogActivity"
+            android:exported="true"
+            android:theme="@style/Theme.KisloGTD.Transparent" />
 
         <!-- WorkManager initializer -->
         <provider

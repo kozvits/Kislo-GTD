@@ -16,4 +16,9 @@ class KisloGtdApp : Application(), Configuration.Provider {
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
+
+    override fun onCreate() {
+        super.onCreate()
+        com.kozvits.kislogtd.data.worker.DayMoveWorker.reschedulePeriodic(this)
+    }
 }

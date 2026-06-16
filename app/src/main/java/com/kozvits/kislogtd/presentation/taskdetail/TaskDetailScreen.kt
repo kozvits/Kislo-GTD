@@ -32,6 +32,7 @@ fun TaskDetailScreen(
     var editNotes by remember(task?.id) { mutableStateOf(task?.notes ?: "") }
     var editSubject by remember(task?.id) { mutableStateOf(task?.subjectPrefix ?: "") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
     val df = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale("ru"))
 
     // Delete confirmation
@@ -47,6 +48,31 @@ fun TaskDetailScreen(
             },
             dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Отмена") } }
         )
+    }
+
+    // Date picker dialog
+    if (showDatePicker && task != null) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = task!!.startDate
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { viewModel.setDate(it) }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Отмена")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 
     LaunchedEffect(task?.id) {
@@ -134,7 +160,7 @@ fun TaskDetailScreen(
                 label = { Text("Субъект (Имя\\ для группировки)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                placeholder = { Text("Я, Степанов, Санек\u2026") }
+                placeholder = { Text("Я, Степанов, Санек…") }
             )
 
             Spacer(Modifier.height(16.dp))
@@ -165,19 +191,44 @@ fun TaskDetailScreen(
                 onValueChange = { editNotes = it; viewModel.updateNotes(it) },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
                 minLines = 5,
-                placeholder = { Text("История револьверного проекта, пометки\u2026") }
+                placeholder = { Text("История револьверного проекта, пометки…") }
             )
 
             Spacer(Modifier.height(16.dp))
 
-            // Dates
+            // Dates with date picker
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     DateRow("Создано", df.format(Date(t.createdAt)))
-                    if (t.startDate != null) DateRow("Начало", df.format(Date(t.startDate!!)))
+                    DateRow(
+                        label = "Запланировано",
+                        value = if (t.startDate != null) df.format(Date(t.startDate!!)) else "не указана"
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { showDatePicker = true },
+                            modifier = Modifier.height(32.dp)
+                        ) {
+                            Icon(Icons.Filled.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text(if (t.startDate != null) "Изменить дату" else "Назначить дату", style = MaterialTheme.typography.labelSmall)
+                        }
+                        if (t.startDate != null) {
+                            OutlinedButton(
+                                onClick = { viewModel.setDate(null) },
+                                modifier = Modifier.height(32.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Text("Очистить", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
                     if (t.completedAt != null) DateRow("Выполнено", df.format(Date(t.completedAt!!)))
                 }
             }

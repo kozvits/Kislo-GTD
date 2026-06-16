@@ -57,6 +57,13 @@ class TaskDetailViewModel @Inject constructor(
         }
     }
 
+    fun setDate(millis: Long?) {
+        viewModelScope.launch {
+            val current = task.value ?: return@launch
+            taskRepository.upsertTask(current.copy(startDate = millis))
+        }
+    }
+
     fun toggleComplete() {
         viewModelScope.launch {
             val current = task.value ?: return@launch
