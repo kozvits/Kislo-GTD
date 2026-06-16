@@ -17,6 +17,7 @@ import com.kozvits.kislogtd.domain.model.Task
 import com.kozvits.kislogtd.domain.model.displayTitle
 import com.kozvits.kislogtd.presentation.common.components.EmptyState
 import com.kozvits.kislogtd.presentation.common.components.TaskCard
+import com.kozvits.kislogtd.presentation.components.StemTaskMenuDialog
 import com.kozvits.kislogtd.presentation.navigation.Screen
 import com.kozvits.kislogtd.presentation.theme.*
 
@@ -32,6 +33,7 @@ fun DayScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var showMoveDialog by remember { mutableStateOf<Task?>(null) }
     var addText by remember { mutableStateOf("") }
+    var stemTaskForMenu by remember { mutableStateOf<Task?>(null) }
 
     // Move dialog
     if (showMoveDialog != null) {
@@ -61,6 +63,19 @@ fun DayScreen(
             dismissButton = {
                 TextButton(onClick = { showMoveDialog = null }) { Text("Отмена") }
             }
+        )
+    }
+
+    // Stem task menu
+    stemTaskForMenu?.let { stemTask ->
+        StemTaskMenuDialog(
+            taskTitle = stemTask.displayTitle,
+            onDismiss = { stemTaskForMenu = null },
+            onCompleteAndDuplicate = { viewModel.completeStemAndDuplicate(stemTask) },
+            onCompleteOnce = { viewModel.completeStemOnce(stemTask) },
+            onSkip = { viewModel.skipStemTask(stemTask) },
+            onConvertToRegular = { viewModel.convertStemToRegular(stemTask) },
+            onEdit = { navController.navigate("task/${stemTask.id}") }
         )
     }
 
@@ -208,9 +223,21 @@ fun DayScreen(
                                 onLongClick = {
                                     navController.navigate("task/${task.id}")
                                 },
-                                onCheckboxToggle = { viewModel.toggleComplete(task) },
+                                onCheckboxToggle = {
+                                    if (task.isStem) {
+                                        stemTaskForMenu = task
+                                    } else {
+                                        viewModel.toggleComplete(task)
+                                    }
+                                },
                                 onSwipeLeft = { viewModel.moveTask(task, "**LATER") },
-                                onSwipeRight = { viewModel.toggleComplete(task) }
+                                onSwipeRight = {
+                                    if (task.isStem) {
+                                        stemTaskForMenu = task
+                                    } else {
+                                        viewModel.toggleComplete(task)
+                                    }
+                                }
                             )
                         }
                     }

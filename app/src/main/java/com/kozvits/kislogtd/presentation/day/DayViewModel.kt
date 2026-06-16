@@ -90,6 +90,49 @@ class DayViewModel @Inject constructor(
         }
     }
 
+    fun completeStemAndDuplicate(task: Task) {
+        viewModelScope.launch {
+            val nextDate = (task.startDate ?: System.currentTimeMillis()) + 86400000L
+            // Create a copy with next date
+            val copy = task.copy(
+                startDate = nextDate,
+                completedAt = null,
+                status = TaskStatus.ACTIVE
+            )
+            // Mark original as completed
+            taskRepository.upsertTask(task.copy(
+                status = TaskStatus.COMPLETED,
+                completedAt = System.currentTimeMillis()
+            ))
+            // Insert the copy
+            taskRepository.upsertTask(copy)
+        }
+    }
+
+    fun completeStemOnce(task: Task) {
+        viewModelScope.launch {
+            taskRepository.upsertTask(task.copy(
+                status = TaskStatus.COMPLETED,
+                completedAt = System.currentTimeMillis(),
+                isStem = false
+            ))
+        }
+    }
+
+    fun skipStemTask(task: Task) {
+        viewModelScope.launch {
+            // Push date forward by one day, keep as stem
+            val nextDate = (task.startDate ?: System.currentTimeMillis()) + 86400000L
+            taskRepository.upsertTask(task.copy(startDate = nextDate))
+        }
+    }
+
+    fun convertStemToRegular(task: Task) {
+        viewModelScope.launch {
+            taskRepository.upsertTask(task.copy(isStem = false))
+        }
+    }
+
     fun moveTask(task: Task, targetCategoryName: String) {
         viewModelScope.launch {
             val targetCategory = when (targetCategoryName) {
