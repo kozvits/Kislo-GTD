@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,7 +66,6 @@ import com.kozvits.kislogtd.presentation.review.WeeklyReviewScreen
 import com.kozvits.kislogtd.presentation.completed.CompletedTasksScreen
 import com.kozvits.kislogtd.presentation.deleted.DeletedTasksScreen
 import com.kozvits.kislogtd.presentation.taskdetail.TaskDetailScreen
-import com.kozvits.kislogtd.presentation.search.SearchScreen
 import com.kozvits.kislogtd.presentation.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
@@ -86,7 +84,6 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object CompletedTasks : Screen("completed_tasks", "Выполненные задачи", Icons.Filled.CheckCircle)
     data object DeletedTasks : Screen("deleted_tasks", "Удаленные задачи", Icons.Filled.Delete)
     data object Settings : Screen("settings", "Настройки", Icons.Filled.Settings)
-    data object Search : Screen("search", "Поиск", Icons.Filled.Search)
     data object Notes : Screen("notes", "Заметки", Icons.Filled.Description)
     data object NoteDetail : Screen("note/{noteId}", "Заметка", Icons.Filled.Description)
 }
@@ -99,7 +96,6 @@ val bottomNavItems = listOf(
 )
 
 val drawerNavItems = listOf(
-    Screen.Search,
     Screen.Later,
     Screen.Maybe,
     Screen.Notes,
@@ -297,9 +293,6 @@ fun AppNavHost() {
                 }
                 composable(Screen.Settings.route) {
                     SettingsScreen(navController)
-                }
-                composable(Screen.Search.route) {
-                    SearchScreen(navController)
                 }
                 composable(Screen.Notes.route) {
                     NoteListScreen(
