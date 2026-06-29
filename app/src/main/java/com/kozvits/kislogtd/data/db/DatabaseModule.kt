@@ -1,7 +1,6 @@
 package com.kozvits.kislogtd.data.db
 
 import android.content.Context
-import androidx.room.Room
 import com.kozvits.kislogtd.data.db.dao.NoteDao
 import com.kozvits.kislogtd.data.db.dao.TaskDao
 import com.kozvits.kislogtd.data.db.dao.WeeklyStatsDao
@@ -19,11 +18,7 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
-        return Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            "kislo_gtd_database"
-        ).build()
+        return AppDatabase.getInstance(context)
     }
 
     @Provides

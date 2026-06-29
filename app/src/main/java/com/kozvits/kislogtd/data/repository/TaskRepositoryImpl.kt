@@ -4,11 +4,9 @@ import com.kozvits.kislogtd.data.db.toDomain
 import com.kozvits.kislogtd.data.db.toEntity
 import com.kozvits.kislogtd.data.db.dao.TaskDao
 import com.kozvits.kislogtd.domain.model.Task
-import com.kozvits.kislogtd.domain.model.TaskCategory
 import com.kozvits.kislogtd.domain.model.TaskStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -99,17 +97,15 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun toggleTaskComplete(task: Task) {
         if (task.isStem) {
-            // Стволовая — дублировать в ***IN
-            val copy = task.copy(
-                id = UUID.randomUUID().toString(),
-                status = TaskStatus.ACTIVE,
-                category = TaskCategory.INBOX,
-                categoryName = "***IN",
-                completedAt = null,
-                createdAt = System.currentTimeMillis(),
-                startDate = null
+            // Стволовая (повторяющаяся): не завершаем, а сдвигаем startDate на завтра
+            val nextStartDate = (task.startDate ?: System.currentTimeMillis()) + 24 * 60 * 60 * 1000L
+            taskDao.upsert(
+                task.copy(
+                    status = TaskStatus.ACTIVE,
+                    startDate = nextStartDate,
+                    completedAt = System.currentTimeMillis()
+                ).toEntity()
             )
-            taskDao.upsert(copy.toEntity())
         } else {
             // Обычная — завершить
             taskDao.updateStatus(

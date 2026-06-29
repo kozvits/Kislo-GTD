@@ -1,6 +1,7 @@
 package com.kozvits.kislogtd.sync
 
 import com.kozvits.kislogtd.data.db.AppDatabase
+import com.kozvits.kislogtd.data.db.entity.NoteEntity
 import com.kozvits.kislogtd.data.db.entity.TaskEntity
 import com.kozvits.kislogtd.data.db.entity.WeeklyStatsEntity
 import org.json.JSONArray
@@ -16,6 +17,7 @@ class BackupManager @Inject constructor(
     data class ImportResult(
         val success: Boolean,
         val tasksImported: Int = 0,
+        val notesImported: Int = 0,
         val statsImported: Int = 0,
         val error: String = ""
     )
@@ -25,6 +27,7 @@ class BackupManager @Inject constructor(
      */
     suspend fun exportToJson(): String {
         val tasks = database.taskDao().getAllTasksList()
+        val notes = database.noteDao().getAllNotesList()
         val stats = database.weeklyStatsDao().getAllStatsList()
 
         val root = JSONObject()
@@ -34,6 +37,12 @@ class BackupManager @Inject constructor(
             tasksArray.put(taskEntityToJson(task))
         }
         root.put("tasks", tasksArray)
+
+        val notesArray = JSONArray()
+        for (note in notes) {
+            notesArray.put(noteEntityToJson(note))
+        }
+        root.put("notes", notesArray)
 
         val statsArray = JSONArray()
         for (stat in stats) {
@@ -54,12 +63,20 @@ class BackupManager @Inject constructor(
         return try {
             val root = JSONObject(jsonString)
             val tasks = mutableListOf<TaskEntity>()
+            val notes = mutableListOf<NoteEntity>()
             val stats = mutableListOf<WeeklyStatsEntity>()
 
             if (root.has("tasks")) {
                 val tasksArray = root.getJSONArray("tasks")
                 for (i in 0 until tasksArray.length()) {
                     tasks.add(taskEntityFromJson(tasksArray.getJSONObject(i)))
+                }
+            }
+
+            if (root.has("notes")) {
+                val notesArray = root.getJSONArray("notes")
+                for (i in 0 until notesArray.length()) {
+                    notes.add(noteEntityFromJson(notesArray.getJSONObject(i)))
                 }
             }
 
@@ -71,11 +88,17 @@ class BackupManager @Inject constructor(
             }
 
             database.taskDao().replaceAll(tasks)
+            if (notes.isNotEmpty()) {
+                database.noteDao().replaceAll(notes)
+            } else {
+                database.noteDao().deleteAll()
+            }
             database.weeklyStatsDao().replaceAll(stats)
 
             ImportResult(
                 success = true,
                 tasksImported = tasks.size,
+                notesImported = notes.size,
                 statsImported = stats.size
             )
         } catch (e: Exception) {
@@ -125,6 +148,32 @@ internal fun taskEntityFromJson(json: JSONObject): TaskEntity {
         completedAt = json.optLong("completedAt", 0L).takeIf { it > 0 },
         sortOrder = json.optInt("sortOrder", 0),
         contextCategory = json.optString("contextCategory", "").takeIf { it.isNotEmpty() }
+    )
+}
+
+internal fun noteEntityToJson(note: NoteEntity): JSONObject {
+    return JSONObject().apply {
+        put("id", note.id)
+        put("title", note.title)
+        put("body", note.body)
+        put("createdAt", note.createdAt)
+        put("updatedAt", note.updatedAt)
+        put("taskId", note.taskId ?: "")
+        put("categoryName", note.categoryName ?: "")
+        put("reminderDate", note.reminderDate ?: 0L)
+    }
+}
+
+internal fun noteEntityFromJson(json: JSONObject): NoteEntity {
+    return NoteEntity(
+        id = json.getString("id"),
+        title = json.optString("title", ""),
+        body = json.optString("body", ""),
+        createdAt = json.getLong("createdAt"),
+        updatedAt = json.optLong("updatedAt", System.currentTimeMillis()),
+        taskId = json.optString("taskId", "").takeIf { it.isNotEmpty() },
+        categoryName = json.optString("categoryName", "").takeIf { it.isNotEmpty() },
+        reminderDate = json.optLong("reminderDate", 0L).takeIf { it > 0 }
     )
 }
 

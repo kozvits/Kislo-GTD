@@ -7,13 +7,9 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.kozvits.kislogtd.data.repository.TaskRepository
 import com.kozvits.kislogtd.domain.model.Task
-import com.kozvits.kislogtd.domain.model.TaskCategory
-import com.kozvits.kislogtd.domain.model.TaskPriority
-import com.kozvits.kislogtd.domain.model.TaskStatus
+import com.kozvits.kislogtd.sync.BackupManager
 import com.kozvits.kislogtd.sync.SyncManager
 import com.kozvits.kislogtd.sync.SyncStateRepository
 import com.kozvits.kislogtd.sync.SyncWorker
@@ -22,7 +18,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -50,44 +45,17 @@ data class SettingsUiState(
     val showDeleteAllConfirm: Boolean = false
 )
 
-data class ExportData(
-    val version: Int = 1,
-    val exportedAt: String = "",
-    val source: String = "kislogtd",
-    val tasks: List<ExportTask> = emptyList()
-)
-
-data class ExportTask(
-    val id: String,
-    val title: String,
-    val category: String,
-    val categoryName: String?,
-    val status: String,
-    val subjectPrefix: String?,
-    val createdAt: Long,
-    val startDate: Long?,
-    val completedAt: Long?,
-    val priority: String,
-    val isStem: Boolean,
-    val isUrgent: Boolean,
-    val notes: String,
-    val projectId: String?,
-    val sortOrder: Int,
-    val contextCategory: String?
-)
-
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     application: Application,
     private val syncStateRepository: SyncStateRepository,
     private val syncManager: SyncManager,
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val backupManager: BackupManager
 ) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
-
-    private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
 
     init {
         viewModelScope.launch {
@@ -275,42 +243,14 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(syncInProgress = true) }
             try {
-                val tasks = taskRepository.getAllTasksOnce()
-                val exportTasks = tasks.map { task ->
-                    ExportTask(
-                        id = task.id,
-                        title = task.title,
-                        category = task.category.name,
-                        categoryName = task.categoryName,
-                        status = task.status.name,
-                        subjectPrefix = task.subjectPrefix,
-                        createdAt = task.createdAt,
-                        startDate = task.startDate,
-                        completedAt = task.completedAt,
-                        priority = task.priority.name,
-                        isStem = task.isStem,
-                        isUrgent = task.isUrgent,
-                        notes = task.notes,
-                        projectId = task.projectId,
-                        sortOrder = task.sortOrder,
-                        contextCategory = task.contextCategory
-                    )
-                }
-                val exportData = ExportData(
-                    version = 1,
-                    exportedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
-                        .format(Date()),
-                    source = "kislogtd",
-                    tasks = exportTasks
-                )
-                val json = gson.toJson(exportData)
+                // Use BackupManager for unified export format
+                val json = backupManager.exportToJson()
 
                 val ctx = getApplication<Application>()
                 var savedPath: String? = null
 
                 withContext(Dispatchers.IO) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        // Android 10+ — save via MediaStore.Downloads (shows in Downloads app)
                         val contentValues = android.content.ContentValues().apply {
                             put(MediaStore.Downloads.DISPLAY_NAME, "kislogtd_export.json")
                             put(MediaStore.Downloads.MIME_TYPE, "application/json")
@@ -330,7 +270,6 @@ class SettingsViewModel @Inject constructor(
                             savedPath = "Загрузки/kislogtd_export.json"
                         }
                     } else {
-                        // Android 8-9 — save to app-specific external Downloads (no permissions needed)
                         val downloadsDir = ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
                         if (downloadsDir != null) {
                             val file = File(downloadsDir, "kislogtd_export.json")
@@ -341,7 +280,7 @@ class SettingsViewModel @Inject constructor(
                 }
 
                 if (savedPath != null) {
-                    addLog("✓ Экспорт завершён: $savedPath (${tasks.size} задач)")
+                    addLog("✓ Экспорт завершён: $savedPath")
                     _state.update { it.copy(exportResult = "Файл сохранён: $savedPath") }
                 } else {
                     addLog("✗ Не удалось создать файл экспорта")
@@ -373,39 +312,12 @@ class SettingsViewModel @Inject constructor(
                     return@launch
                 }
 
-                val exportData = gson.fromJson(json, ExportData::class.java)
-                if (exportData.tasks.isEmpty()) {
-                    addLog("✗ Файл не содержит задач")
-                    return@launch
+                val result = backupManager.importFromJson(json)
+                if (result.success) {
+                    addLog("✓ Импорт завершён: ${result.tasksImported} задач, ${result.notesImported} заметок")
+                } else {
+                    addLog("✗ Ошибка импорта: ${result.error}")
                 }
-
-                var imported = 0
-                for (et in exportData.tasks) {
-                    val category = try { TaskCategory.valueOf(et.category) } catch (_: Exception) { TaskCategory.INBOX }
-                    val status = try { TaskStatus.valueOf(et.status) } catch (_: Exception) { TaskStatus.ACTIVE }
-                    val priority = try { TaskPriority.valueOf(et.priority) } catch (_: Exception) { TaskPriority.NORMAL }
-                    val task = Task(
-                        id = et.id,
-                        title = et.title,
-                        category = category,
-                        categoryName = et.categoryName,
-                        status = status,
-                        subjectPrefix = et.subjectPrefix,
-                        createdAt = et.createdAt,
-                        startDate = et.startDate,
-                        completedAt = et.completedAt,
-                        priority = priority,
-                        isStem = et.isStem,
-                        isUrgent = et.isUrgent,
-                        notes = et.notes,
-                        projectId = et.projectId,
-                        sortOrder = et.sortOrder,
-                        contextCategory = et.contextCategory
-                    )
-                    taskRepository.upsertTask(task)
-                    imported++
-                }
-                addLog("✓ Импорт завершён: $imported задач")
             } catch (e: Exception) {
                 addLog("✗ Ошибка импорта: ${e.message}")
             } finally {

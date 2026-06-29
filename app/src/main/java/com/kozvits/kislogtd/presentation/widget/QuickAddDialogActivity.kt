@@ -10,21 +10,24 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.kozvits.kislogtd.data.db.AppDatabase
+import androidx.lifecycle.lifecycleScope
+import com.kozvits.kislogtd.data.db.dao.TaskDao
 import com.kozvits.kislogtd.data.db.entity.TaskEntity
 import com.kozvits.kislogtd.domain.model.TaskCategory
 import com.kozvits.kislogtd.domain.model.TaskPriority
 import com.kozvits.kislogtd.presentation.theme.KisloGTDTheme
-import kotlinx.coroutines.CoroutineScope
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class QuickAddDialogActivity : ComponentActivity() {
 
-    private val scope = CoroutineScope(Dispatchers.Main)
+    @Inject
+    lateinit var taskDao: TaskDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,15 +35,9 @@ class QuickAddDialogActivity : ComponentActivity() {
             KisloGTDTheme {
                 QuickAddContent(
                     onAdd = { title ->
-                        scope.launch {
+                        lifecycleScope.launch {
                             saveTask(title)
-                            runOnUiThread {
-                                Toast.makeText(
-                                    this@QuickAddDialogActivity,
-                                    "Задача добавлена в ***IN",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                            Toast.makeText(this@QuickAddDialogActivity, "Задача добавлена в ***IN", Toast.LENGTH_SHORT).show()
                             finish()
                         }
                     },
@@ -51,7 +48,6 @@ class QuickAddDialogActivity : ComponentActivity() {
     }
 
     private suspend fun saveTask(title: String) = withContext(Dispatchers.IO) {
-        val db = AppDatabase.getInstance(applicationContext)
         val now = System.currentTimeMillis()
         val entity = TaskEntity(
             id = UUID.randomUUID().toString(),
@@ -65,12 +61,7 @@ class QuickAddDialogActivity : ComponentActivity() {
             notes = "",
             sortOrder = 0
         )
-        db.taskDao().upsert(entity)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        scope.cancel()
+        taskDao.upsert(entity)
     }
 }
 

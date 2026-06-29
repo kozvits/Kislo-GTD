@@ -70,6 +70,8 @@ class DropboxApiClient @Inject constructor() {
 
     /**
      * Download JSON backup from Dropbox.
+     * Per Dropbox API v2, POST /2/files/download expects ONLY the
+     * Dropbox-API-Arg header — the request body must be EMPTY.
      */
     fun downloadBackup(token: String): Result<String> {
         return try {
@@ -77,12 +79,12 @@ class DropboxApiClient @Inject constructor() {
                 put("path", BACKUP_FILE)
             }
 
-            val body = arg.toString().toRequestBody("application/json".toMediaTypeOrNull())
+            val emptyBody = "".toRequestBody(null)
             val request = Request.Builder()
                 .url("$CONTENT_DOMAIN/2/files/download")
                 .header("Authorization", authHeader(token))
                 .header("Dropbox-API-Arg", arg.toString())
-                .post(body)
+                .post(emptyBody)
                 .build()
 
             val response = client.newCall(request).execute()

@@ -34,9 +34,12 @@ abstract class AppDatabase : RoomDatabase() {
                     """CREATE TABLE IF NOT EXISTS `notes` (
                         `id` TEXT NOT NULL PRIMARY KEY,
                         `title` TEXT NOT NULL,
-                        `content` TEXT NOT NULL DEFAULT '',
-                        `created_at` INTEGER NOT NULL,
-                        `updated_at` INTEGER NOT NULL
+                        `body` TEXT NOT NULL DEFAULT '',
+                        `createdAt` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL,
+                        `taskId` TEXT,
+                        `categoryName` TEXT,
+                        `reminderDate` INTEGER
                     )"""
                 )
             }

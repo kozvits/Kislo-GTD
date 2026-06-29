@@ -54,7 +54,7 @@ class WeeklyReviewViewModel @Inject constructor(
                 task.projectId != null || (
                     task.categoryName != null &&
                     task.categoryName == task.categoryName?.uppercase() &&
-                    task.categoryName?.length!! > 2 &&
+                    (task.categoryName?.length ?: 0) > 2 &&
                     !task.categoryName!!.startsWith("*") &&
                     !task.categoryName!!.startsWith(">") &&
                     !task.categoryName!!.startsWith("\\") &&

@@ -26,4 +26,21 @@ interface NoteDao {
 
     @Query("DELETE FROM notes WHERE id = :id")
     suspend fun deleteNoteById(id: String)
+
+    // ── Sync support ─────────────────────────────────────────────────
+
+    @Query("SELECT * FROM notes")
+    suspend fun getAllNotesList(): List<NoteEntity>
+
+    @Query("DELETE FROM notes")
+    suspend fun deleteAll()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(notes: List<NoteEntity>)
+
+    @androidx.room.Transaction
+    suspend fun replaceAll(notes: List<NoteEntity>) {
+        deleteAll()
+        insertAll(notes)
+    }
 }

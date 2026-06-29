@@ -2,7 +2,6 @@ package com.kozvits.kislogtd.sync
 
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
