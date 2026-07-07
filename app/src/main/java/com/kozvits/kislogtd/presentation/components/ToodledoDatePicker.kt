@@ -88,6 +88,8 @@ fun ToodledoDatePickerDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(20.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
         title = {
             Text("Выберите дату", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         },
@@ -125,12 +127,17 @@ fun ToodledoDatePickerDialog(
                         }
                         displayedMonthMillis = cal.timeInMillis
                     }) {
-                        Icon(Icons.Filled.ChevronLeft, contentDescription = "Пред. месяц")
+                        Icon(
+                            Icons.Filled.ChevronLeft,
+                            contentDescription = "Пред. месяц",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                     Text(
                         text = dfMonth.format(Date(displayedMonthMillis)).replaceFirstChar { it.uppercase() },
                         style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     IconButton(onClick = {
                         val cal = Calendar.getInstance().apply {
@@ -139,7 +146,11 @@ fun ToodledoDatePickerDialog(
                         }
                         displayedMonthMillis = cal.timeInMillis
                     }) {
-                        Icon(Icons.Filled.ChevronRight, contentDescription = "След. месяц")
+                        Icon(
+                            Icons.Filled.ChevronRight,
+                            contentDescription = "След. месяц",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
 
